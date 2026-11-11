@@ -26,7 +26,7 @@ const STYLES = {
     band: '#2a1810',
     visor: '#4a2a1b',
     plates: 32,
-    shikoro: { lames: 5, r0: 10.6, r1: 19.5, y0: 4.6, y1: -6.6, ez: 1.08, a0: 1.02 },
+    shikoro: { lames: 5, r0: 10.9, r1: 19.5, y0: 4.6, y1: -6.6, ez: 1.08, a0: 0.85 },
     lacing: { style: 'sugake', pal: pal('#231610', '#4a3020', '#0e0805', '#3f86a8', '#22566f', '#7fc0dc', '#c9a24a') },
     sodeLacing: { style: 'kebiki', dots: true, pal: pal('#1d120c', '#4a3020', '#0e0805', '#3c7ea0', '#1f4e66', '#78bad6', '#d8b45a') },
     doLacing: { style: 'kebiki', plateFrac: 0.55, dots: true, clouds: true, pal: pal('#21140d', '#4b3121', '#0b0604', '#3f86a8', '#22566f', '#7fc0dc', '#d8b45a') },
@@ -41,7 +41,7 @@ const STYLES = {
     band: '#c49a46',
     visor: '#140e0b',
     plates: 24,
-    shikoro: { lames: 5, r0: 10.6, r1: 16.2, y0: 4.6, y1: -8.4, ez: 1.06, a0: 1.05 },
+    shikoro: { lames: 5, r0: 10.9, r1: 16.2, y0: 4.6, y1: -8.4, ez: 1.06, a0: 0.88 },
     lacing: { style: 'kebiki', knots: true, pal: pal('#3a0f0b', '#5e1d15', '#160604', '#b8341f', '#7c1d10', '#e8724a', '#d8b45a') },
     sodeLacing: { style: 'kebiki', knots: true, pal: pal('#3a0f0b', '#5e1d15', '#160604', '#b8341f', '#7c1d10', '#e8724a', '#d8b45a') },
     doLacing: { style: 'kebiki', knots: true, pal: pal('#3a0f0b', '#5e1d15', '#160604', '#b8341f', '#7c1d10', '#e8724a', '#d8b45a') },
@@ -117,9 +117,12 @@ function lacingMat(spec, aniso, extra = {}){
 }
 
 // ------------------------------------------------------------------ the helmet bowl
-// An ellipsoid dome over the skull, its rim lower at the back than over the brow.
-const BOWL = { cy: 3.0, cz: -4.0, ax: 9.8, ay: 10.2, az: 11.2, yf: 6.0, yb: 2.6 };
-function rimPhi(t){ const y = BOWL.yb + (BOWL.yf - BOWL.yb) * (1 + Math.cos(t)) / 2; return Math.acos((y - BOWL.cy) / BOWL.ay); }
+// An ellipsoid dome over the skull, its rim on the brow at the front and dropping to the
+// nape at the back, so it covers the hair all round like a head-wear lens. It is sized
+// for a head with hair (children's heads are large for their faces), not a bald skull.
+const BOWL = { cy: 3.3, cz: -4.3, ax: 10.1, ay: 10.3, az: 11.3, yf: 5.8, yb: 0.8 };
+export const rimY = (t) => BOWL.yb + (BOWL.yf - BOWL.yb) * (1 + Math.cos(t)) / 2;
+function rimPhi(t){ return Math.acos((rimY(t) - BOWL.cy) / BOWL.ay); }
 function bowlPoint(t, s, k = 1){
   // t: angle round from the front (+z) toward +x; s: 0 at the top → 1 at the rim
   const ph = s * rimPhi(t);
@@ -176,7 +179,10 @@ function visor(mat){
     const d = [Math.sin(t), 0, Math.cos(t)];
     return [p[0] + d[0] * L * v, p[1] - 1.3 * L / 3.1 * v + 0.35 * v * v, p[2] + d[2] * L * v];
   };
-  g.add(new THREE.Mesh(surface(80, 8, f), mat.lacquer));
+  // the surface faces down: the underside is matte and dark (it shades your eyes), the top is lacquer
+  const geo = surface(80, 8, f);
+  const top = mat.lacquer.clone(); top.side = THREE.BackSide;
+  g.add(new THREE.Mesh(geo, top), new THREE.Mesh(geo, M({ color: '#140c08', roughness: 0.9, envMapIntensity: 0.15 })));
   const edge = [];
   for (let i = 0; i <= 60; i++){ const p = f(i / 60, 1); edge.push(V(...p)); }
   g.add(tube(edge, 0.13, mat.gold, { seg: 160 }));
@@ -188,21 +194,26 @@ function visor(mat){
 // lame laps over the one below, like roof tiles.
 function shikoro(st, mat, aniso){
   const S = st.shikoro, g = new THREE.Group(); g.name = 'shikoro';
-  const R = (y) => S.r0 + (S.r1 - S.r0) * ((S.y0 - y) / (S.y0 - S.y1)) ** 1.25;
-  const lh = (S.y0 - S.y1) / S.lames, over = 0.55;
+  // hung from just under the rim all the way round, so it follows the rim down to the nape;
+  // d is the depth below the rim
+  const H = S.y0 - S.y1, lh = H / S.lames, over = 0.55;
+  const R = (d) => S.r0 + (S.r1 - S.r0) * (Math.max(0, d) / H) ** 1.25;
   const arc = (r) => r * (TAU - 2 * S.a0);
   const matL = lacingMat({ ...st.lacing, lames: 1, cols: Math.round(arc((S.r0 + S.r1) / 2) / 1.0) }, aniso);
   const matLast = lacingMat({ ...st.lacing, lames: 1, cols: Math.round(arc((S.r0 + S.r1) / 2) / 1.0), knots: st.lacing.knots }, aniso);
+  let front = null;
   for (let L = 0; L < S.lames; L++){
-    const yT = S.y0 - L * lh + (L ? over : 0), yB = S.y0 - (L + 1) * lh;
+    const dT = L * lh - (L ? over : 0) - 0.5, dB = (L + 1) * lh - 0.5;
     const off = 0.32 * (S.lames - L);
-    // the front ends sweep back a little lower down, so the face stays open
-    const a0 = S.a0 + 0.06 * L;
+    // the top lames come forward past the ears and temples; the lower, wider ones sweep
+    // back so they never cross in front of the face
+    const a0 = S.a0 + 0.11 * L;
     const f = (u, v) => {
-      const t = a0 + u * (TAU - 2 * a0), y = yB + (yT - yB) * v;
-      const r = R(y) + off + 0.45 * (1 - v);
+      const t = a0 + u * (TAU - 2 * a0), d = dB + (dT - dB) * v, y = rimY(t) - d;
+      const r = R(d) + off + 0.45 * (1 - v);
       return [r * Math.sin(t), y, BOWL.cz + 0.2 + r * S.ez * Math.cos(t)];
     };
+    if (L === 0) front = { p: f(0, 0.55), t: a0 };
     const m = new THREE.Mesh(surface(120, 6, f), L === S.lames - 1 ? matLast : matL);
     m.renderOrder = 1;
     g.add(m);
@@ -212,11 +223,11 @@ function shikoro(st, mat, aniso){
       g.add(tube(e, 0.22, mat.lacquer, { seg: 160 }));
     }
   }
-  return { g, R, S };
+  return { g, R, S, front };
 }
 
 // ------------------------------------------------------------------ flaps (fukigaeshi)
-function flaps(st, mat, aniso, crestTex){
+function flaps(st, mat, aniso, crestTex, front){
   const g = new THREE.Group(); g.name = 'fukigaeshi';
   const big = st.flap.kind === 'leather';
   const W = big ? 7.2 : 6.4, Hb = big ? -3.6 : -3.0, Ht = big ? 5.4 : 4.6;
@@ -230,8 +241,11 @@ function flaps(st, mat, aniso, crestTex){
   // UVs from the flat shape, then place it: out and back from the front of the neck guard
   const p = geo.attributes.position, uv = geo.attributes.uv;
   for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / (W + 0.4), (p.getY(i) + 4) / 9.6);
-  const u = V(0.82, 0, -0.57).normalize(), v = V(0, 1, 0), n = new THREE.Vector3().crossVectors(u, v);
-  const basis = new THREE.Matrix4().makeBasis(u, v, n).setPosition(9.3, 3.9, 1.6);
+  // turned back from the front edge of the top lame, out and a little back, facing forward
+  const T = front.t + 1.25;
+  const u = V(Math.sin(T), 0, Math.cos(T)), v = V(0, 1, 0), n = new THREE.Vector3().crossVectors(u, v);
+  const [ax, ay, az] = front.p;
+  const basis = new THREE.Matrix4().makeBasis(u, v, n).setPosition(ax + n.x * 0.25, ay + 0.6, az + n.z * 0.25);
   // a gentle curl, like leather over a plate
   for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) - 0.035 * p.getX(i) ** 2);
   geo.applyMatrix4(basis);
@@ -507,7 +521,7 @@ export function occluders(){
   const mat = new THREE.MeshBasicMaterial({ colorWrite: false });
   const g = new THREE.Group(); g.name = 'occluders';
   const head = new THREE.Mesh(new THREE.SphereGeometry(1, 40, 28), mat);
-  head.scale.set(7.4, 10.2, 8.6); head.position.set(0, 2.0, -4.5);
+  head.scale.set(7.7, 10.4, 9.0); head.position.set(0, 2.3, -4.7);
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(5.6, 6.4, 22, 32), mat);
   neck.scale.set(1, 1, 0.95); neck.position.set(0, -16, -3.6);
   for (const m of [head, neck]) m.renderOrder = -1;
@@ -523,7 +537,8 @@ export function buildSuit(id, { aniso = 8, menpo: withMenpo } = {}){
   const crestTex = crestTexture(aniso);
   const root = new THREE.Group(); root.name = id;
   const head = new THREE.Group(); head.name = 'head';
-  head.add(bowl(st, mat), visor(mat), shikoro(st, mat, aniso).g, flaps(st, mat, aniso, crestTex));
+  const sk = shikoro(st, mat, aniso);
+  head.add(bowl(st, mat), visor(mat), sk.g, flaps(st, mat, aniso, crestTex, sk.front));
   if (st.horns) head.add(horns(mat));
   const face = new THREE.Group(); face.name = 'faceguard';
   face.add(menpo(st, mat, aniso));

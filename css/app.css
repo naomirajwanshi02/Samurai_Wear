@@ -168,3 +168,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .tray .sep{flex:none;width:1px;margin:6px 2px;background:var(--anatomy-faint)}
 .refs{display:flex;gap:8px;justify-content:center}
 .refs img{width:84px;height:104px;object-fit:cover;border-radius:4px;box-shadow:0 0 0 1px var(--anatomy-mid),0 4px 10px #3b2a1c33}
+/* the name card shrinks to its title after a few seconds so it never hides the helmet; tap to open */
+.namecard{pointer-events:auto;cursor:pointer}
+.namecard .nc-blurb{transition:opacity .25s}
+.namecard.compact{padding-bottom:8px}
+.namecard.compact .nc-blurb{display:none}

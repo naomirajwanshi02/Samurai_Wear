@@ -133,12 +133,44 @@ function hdVideo(){
     video.muted = true;
     Object.assign(video.style, { position: 'absolute', top: '0px', left: '0px', zIndex: '-2' });
     this.container.appendChild(video);
+    const fake = new URLSearchParams(location.search).get('fakecam');
+    const ready = () => { video.setAttribute('width', video.videoWidth); video.setAttribute('height', video.videoHeight); resolve(); };
+    if (fake){ video.addEventListener('loadedmetadata', ready, { once: true }); fakeStream(fake).then((s) => { video.srcObject = s; }, reject); return; }
     if (!navigator.mediaDevices?.getUserMedia){ reject(new Error('no camera API')); return; }
     navigator.mediaDevices.getUserMedia({ audio: false, video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } })
       .then((stream) => {
         video.addEventListener('loadedmetadata', () => { video.setAttribute('width', video.videoWidth); video.setAttribute('height', video.videoHeight); resolve(); });
         video.srcObject = stream;
       }).catch(reject);
+  });
+}
+
+// Testing without a camera: ?fakecam=<image url> plays a photo (CORS-enabled) as the selfie
+// video. &fakemove=1 sways it (roll, drift, nearer/farther) to test tracking in motion.
+function fakeStream(src){
+  return new Promise((ok, fail) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onerror = () => fail(new Error('fakecam image failed to load'));
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = 1280; c.height = 720;
+      const g = c.getContext('2d');
+      const move = new URLSearchParams(location.search).has('fakemove');
+      const zoom = parseFloat(new URLSearchParams(location.search).get('fakezoom') || '1');
+      const draw = () => {
+        const t = performance.now() / 1000;
+        g.fillStyle = '#6b6258'; g.fillRect(0, 0, c.width, c.height);
+        const k = Math.min(c.width / img.width, c.height / img.height) * zoom * (move ? 1 + 0.12 * Math.sin(t * 0.7) : 1);
+        g.save();
+        g.translate(c.width / 2 + (move ? 90 * Math.sin(t * 0.5) : 0), c.height / 2 + (move ? 30 * Math.sin(t * 0.9) : 0));
+        g.rotate(move ? 0.18 * Math.sin(t * 0.8) : 0);
+        g.drawImage(img, -img.width * k / 2, -img.height * k / 2, img.width * k, img.height * k);
+        g.restore();
+      };
+      draw(); setInterval(draw, 33);
+      ok(c.captureStream(30));
+    };
+    img.src = src;
   });
 }
 
@@ -156,7 +188,13 @@ export async function startCamera(container, { onStatus, onFace }){
   face.matrixAutoUpdate = false; face.visible = false;
   face.add(occluders());
   const torso = new THREE.Group(); torso.visible = false;
-  mindar.scene.add(face, torso);
+  // Like a head-wear lens: the live face mesh (468 landmarks, reshaped every frame) is drawn
+  // into depth only, so any part of the helmet that is behind your real face — the far flap,
+  // the far side of the neck guard when you turn — hides behind it exactly.
+  const faceOcc = mindar.addFaceMesh();
+  faceOcc.material = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide });
+  faceOcc.renderOrder = -1;
+  mindar.scene.add(faceOcc, face, torso);
   common(mindar.renderer, mindar.scene, mindar.camera, face, torso);
   onStatus?.('Starting the selfie camera…');
   try { await mindar.start(); }

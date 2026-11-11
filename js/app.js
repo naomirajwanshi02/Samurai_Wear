@@ -171,7 +171,8 @@ async function select(id, { quiet = false } = {}){
   $('ncName').textContent = m.name;
   $('ncJp').textContent = `${m.jp} · ${m.kana}`;
   $('ncBlurb').textContent = m.blurb;
-  $('namecard').classList.remove('pop'); void $('namecard').offsetWidth; $('namecard').classList.add('pop');
+  $('namecard').classList.remove('pop', 'compact'); void $('namecard').offsetWidth; $('namecard').classList.add('pop');
+  clearTimeout(S.compactT); S.compactT = setTimeout(() => $('namecard').classList.add('compact'), 5000);
   overlay('carving', true);
   if (!quiet) buzz(15);
   Stage.setFaceGuard(menpoOn());
@@ -238,6 +239,7 @@ $('goBtn').addEventListener('click', () => start(false));
 $('previewBtn').addEventListener('click', () => start(true));
 $('closeBtn').addEventListener('click', () => { clearInterval(S.hintTimer); overlay('hud', false); overlay('faceGuide', false); openScan(); });
 $('factBtn').addEventListener('click', nextFact);
+$('namecard').addEventListener('click', () => { clearTimeout(S.compactT); $('namecard').classList.toggle('compact'); });
 $('shutter').addEventListener('click', takePhoto);
 $('photoBack').addEventListener('click', () => show(null));
 $('errBtn').addEventListener('click', () => { $('err').hidden = true; location.reload(); });
