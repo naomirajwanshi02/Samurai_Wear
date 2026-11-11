@@ -52,14 +52,14 @@ async function draw(){
   // title block
   g.fillStyle = '#2b1e13'; g.font = '700 70px Georgia,"Times New Roman",serif'; g.fillText('SAMURAI', 80, 150);
   g.fillStyle = '#b5452f'; g.font = 'italic 700 112px Georgia,"Times New Roman",serif'; g.fillText('Wear', 84, 270);
-  g.fillStyle = '#5b4630'; g.font = '22px Consolas,monospace'; g.fillText('FIG. 01 · SCAN ME TO WEAR A HELMET · 兜・鎧', 84, 330);
+  g.fillStyle = '#5b4630'; g.font = '22px Consolas,monospace'; g.fillText('FIG. 01 · SCAN ME TO WEAR THE Ō-YOROI · 大鎧', 84, 330);
   // big seal
   g.save(); g.translate(740, 210); g.rotate(-0.22);
   g.strokeStyle = '#b5452f'; g.lineWidth = 8; g.beginPath(); g.arc(0, 0, 78, 0, 6.28); g.stroke();
   g.fillStyle = '#b5452f'; g.font = '900 84px "Yu Gothic","Meiryo",sans-serif'; g.textAlign = 'center'; g.fillText('侍', 0, 30);
   g.restore(); g.textAlign = 'left';
   // the eight masks, skewed and scattered, each with its label plate
-  const spots = [[860, 40, 430, -6], [500, 420, 470, 7]];
+  const spots = [[700, 150, 640, -5]];
   for (let i = 0; i < MASKS.length; i++){
     const m = MASKS[i], [x, y, s, rot] = spots[i];
     const img = await load(`../assets/thumbs/${m.id}.png?${Date.now()}`);
@@ -76,7 +76,7 @@ async function draw(){
   g.strokeStyle = '#b5452f'; g.lineWidth = 3; g.strokeRect(1350, 430, 110, 460);
   // the roles, bottom left, as fine print
   g.textAlign = 'left'; g.font = '16px Consolas,monospace';
-  ['KABUTO 兜 · HELMET', 'SHIKORO 錣 · NECK GUARD', 'FUKIGAESHI 吹返 · FLAPS', 'MENPŌ 面頬 · FACE GUARD', 'KUWAGATA 鍬形 · HORNS', 'SODE 袖 · SHOULDER GUARDS', 'DŌ 胴 · CUIRASS', 'ODOSHI 縅 · LACING'].forEach((t, i) => { g.fillStyle = i % 3 ? '#5b4630' : '#b5452f'; g.fillText(`${String(i + 1).padStart(2, '0')} ${t}`, 86, 430 + i * 36); });
+  ['HOSHI KABUTO 星兜 · HELMET', 'KUWAGATA 鍬形 · HORNS', 'SHINODARE 篠垂 · GILT STRIPS', 'FUKIGAESHI 吹返 · FLAPS', 'SHIKORO 錣 · NECK GUARD', 'HAPPURI 半首 · FACE GUARD', 'Ō-SODE 大袖 · SHOULDER GUARDS', 'KUSAZURI 草摺 · SKIRT'].forEach((t, i) => { g.fillStyle = i % 3 ? '#5b4630' : '#b5452f'; g.fillText(`${String(i + 1).padStart(2, '0')} ${t}`, 86, 430 + i * 36); });
   const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
   out.innerHTML = '';
   const shown = new Image(); shown.src = URL.createObjectURL(blob); out.appendChild(shown);
@@ -101,8 +101,8 @@ async function compile(){
   window.__done = true;
 }
 
-// a hidden browser tab pauses animation frames, which stalls the compiler: tick on a timer instead
-if (document.hidden) window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 4);
+// a background or embedded browser tab can pause animation frames, which stalls the compiler: tick on a timer
+window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 4);
 document.getElementById('draw').onclick = draw;
 document.getElementById('compile').onclick = compile;
 if (new URLSearchParams(location.search).has('build')) draw().then(compile).catch((e) => { log('ERROR ' + e); window.__done = 'error'; });

@@ -3,7 +3,7 @@
 //
 // ?demo=1     skip the card
 // ?preview=1  no camera at all: the armour stands on a head-form
-// ?suit=<id>  start with that suit (tosei | oyoroi)
+// ?suit=oyoroi  the suit (there is one: the Ō-yoroi)
 
 import { SUITS, BY_ID, PARTS, EXTRA_FACTS } from './data.js';
 import { scan, stopScan } from './scan.js';
@@ -16,7 +16,7 @@ const store = {
   set(k, v){ try { localStorage.setItem('samurai.' + k, JSON.stringify(v)); } catch { /* private mode */ } },
 };
 const S = {
-  phase: 'scan', suit: BY_ID[q.get('suit')] ? q.get('suit') : store.get('suit', 'tosei'),
+  phase: 'scan', suit: BY_ID[q.get('suit')] ? q.get('suit') : BY_ID[store.get('suit', '')] ? store.get('suit', '') : SUITS[0].id,
   menpo: store.get('menpo', null), armour: store.get('armour', true), photoUrl: null, hintTimer: 0, fact: 0,
 };
 
@@ -144,7 +144,7 @@ function buildTray(){
   for (const [key, label] of [['menpo', 'Face guard'], ['armour', 'Armour']]){
     const b = document.createElement('button');
     b.className = 'chip toggle'; b.id = `tg-${key}`;
-    b.innerHTML = `${ICONS[key]}<b>${label}</b><small>${key === 'menpo' ? '面頬' : '鎧'}</small>`;
+    b.innerHTML = `${ICONS[key]}<b>${label}</b><small>${key === 'menpo' ? '半首' : '鎧'}</small>`;
     b.addEventListener('click', () => toggle(key));
     tray.appendChild(b);
   }
@@ -156,7 +156,7 @@ function syncToggles(){
 }
 function toggle(key){
   buzz(12);
-  if (key === 'menpo'){ S.menpo = !menpoOn(); store.set('menpo', S.menpo); Stage.setFaceGuard(S.menpo); toast(S.menpo ? '<b>Menpō 面頬</b> on: an iron face guard with a fierce red mouth.' : 'Face guard off. A silk cord under the chin ties the helmet on.', 2600); }
+  if (key === 'menpo'){ S.menpo = !menpoOn(); store.set('menpo', S.menpo); Stage.setFaceGuard(S.menpo); toast(S.menpo ? '<b>Happuri 半首</b> on: an iron guard over the forehead and cheeks, the face guard of the first samurai.' : 'Face guard off. The red silk chin cord still ties the helmet on.', 2600); }
   else { S.armour = !S.armour; store.set('armour', S.armour); Stage.setArmour(S.armour); }
   syncToggles();
 }
@@ -193,9 +193,9 @@ function hintLoop(){
   S.hintTimer = setInterval(() => {
     if (S.phase !== 'wear') return;
     n++;
-    if (n % 4 === 1) $('hint').innerHTML = 'Tap <b>Face guard</b> to put the iron mask on or off';
+    if (n % 4 === 1) $('hint').innerHTML = 'Tap <b>Face guard</b> to put the iron happuri on or off';
     else if (n % 4 === 2) $('hint').innerHTML = 'Tap the <b>round button</b> to take a photo';
-    else if (n % 4 === 3) $('hint').innerHTML = 'Try the other helmet from the bottom row';
+    else if (n % 4 === 3) $('hint').innerHTML = 'Tap <b>i</b> to learn what each part of the armour is called';
     else setHint();
   }, 6000);
 }

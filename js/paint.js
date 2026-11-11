@@ -177,6 +177,40 @@ export function crestTexture(aniso = 8){
   return tex(c, { aniso });
 }
 
+// Egawa: stencilled deer leather as on Heian–Kamakura ō-yoroi: a buff ground of tiny indigo
+// "hail" dots (arare-ji) with peony roundels in indigo and madder red.
+export function egawaTexture(aniso = 8, seed = 31){
+  const S = 512;
+  const [c, g] = canvas(S, S);
+  const r = rng(seed);
+  g.fillStyle = '#dccdaa'; g.fillRect(0, 0, S, S);
+  // hail ground
+  g.fillStyle = '#3a4f78';
+  for (let y = 8; y < S; y += 16) for (let x = (y / 16) % 2 ? 8 : 16; x < S; x += 16){ g.beginPath(); g.arc(x, y, 3.4, 0, 7); g.fill(); }
+  // peony roundels on a lattice (wraps seamlessly)
+  const peony = (cx, cy, R) => {
+    g.fillStyle = '#e4d9bf'; g.beginPath(); g.arc(cx, cy, R * 1.25, 0, 7); g.fill();
+    for (let k = 0; k < 4; k++){ // leaves
+      const a = k * Math.PI / 2 + Math.PI / 4;
+      g.fillStyle = '#2f5a4a'; g.beginPath(); g.ellipse(cx + Math.cos(a) * R * 0.95, cy + Math.sin(a) * R * 0.95, R * 0.42, R * 0.2, a, 0, 7); g.fill();
+    }
+    for (let k = 0; k < 8; k++){ // petals
+      const a = k * Math.PI / 4 + r() * 0.2;
+      g.fillStyle = k % 2 ? '#2c3f6b' : '#3d5689';
+      g.beginPath(); g.ellipse(cx + Math.cos(a) * R * 0.5, cy + Math.sin(a) * R * 0.5, R * 0.42, R * 0.26, a, 0, 7); g.fill();
+    }
+    g.fillStyle = '#a8392b'; g.beginPath(); g.arc(cx, cy, R * 0.3, 0, 7); g.fill();
+    g.fillStyle = '#e0b74e'; g.beginPath(); g.arc(cx, cy, R * 0.12, 0, 7); g.fill();
+  };
+  for (const [x, y] of [[128, 128], [384, 384], [384, 128], [128, 384]]){
+    for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) if ((x === 128) === (y === 128)) peony(x + dx, y + dy, 60);
+  }
+  for (const [x, y] of [[384, 128], [128, 384]]) for (const dx of [-S, 0, S]) for (const dy of [-S, 0, S]) peony(x + dx, y + dy, 44);
+  const t = tex(c, { aniso });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+
 // Stencilled leather for flaps (fukigaeshi) and the chest panel.
 export function leatherTexture(P, aniso = 8, seed = 11){
   const S = 512;

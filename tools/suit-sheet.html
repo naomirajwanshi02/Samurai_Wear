@@ -24,7 +24,7 @@ import { NECK, headForm } from '../js/stage.js';
 import { BY_ID } from '../js/data.js';
 
 const q = new URLSearchParams(location.search);
-const ids = q.get('id') ? [q.get('id')] : ['tosei', 'oyoroi'];
+const ids = ['oyoroi'];
 const yaw = parseFloat(q.get('yaw') ?? '0.42'), pitch = parseFloat(q.get('pitch') ?? '0.06');
 const save = q.has('save');
 const withBody = !save && q.get('body') !== '0';

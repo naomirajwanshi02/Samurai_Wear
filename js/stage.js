@@ -12,6 +12,7 @@ import { buildSuit, disposeSuit, setMenpo, occluders } from './armour.js';
 import { setupLook, roomLight } from './look.js';
 import { BY_ID } from './data.js';
 import { bindToFace, followFace } from './face-fit.js';
+import * as FACE from './face-model.js';
 
 export const NECK = new THREE.Vector3(0, -8, -3.5); // where the body hangs from, in face space
 
@@ -109,8 +110,14 @@ function previewPose(dt){
 export function headForm(){
   const wood = new THREE.MeshPhysicalMaterial({ color: '#3a2a1e', roughness: 0.55, clearcoat: 0.4 });
   const g = new THREE.Group();
+  // the face is MindAR's own canonical face, so the face guard sits on it as it does on you
+  const fg = new THREE.BufferGeometry();
+  fg.setAttribute('position', new THREE.Float32BufferAttribute(FACE.positions.flat(), 3));
+  fg.setIndex(FACE.faces); fg.computeVertexNormals();
+  const face = new THREE.Mesh(fg, wood);
   const head = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 32), wood);
-  head.scale.set(7.3, 10.6, 9.4); head.position.set(0, 1.6, -3.0);
+  head.scale.set(7.5, 10.2, 8.6); head.position.set(0, 2.0, -4.6);
+  g.add(face);
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(5.2, 6.2, 20, 32), wood);
   neck.position.set(0, -13, -3.6);
   g.add(head, neck);
