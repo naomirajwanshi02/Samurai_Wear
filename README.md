@@ -4,8 +4,8 @@ Point your phone at the printed **Samurai Wear card**. When the card is recognis
 room opens. Turn the camera round to yourself, pick one of two samurai helmets from the bottom
 row and wear it, with its iron face guard and armour if you like, then take a photo. Made for ages 8–14.
 
-**Play locally:** `http://localhost:8127/`
-**Without the card:** `?demo=1` · **Without any camera:** `?preview=1` · **Start with a suit:** `?suit=oyoroi`
+**Play:** https://naomirajwanshi02.github.io/Samurai_Wear/ · **Locally:** `http://localhost:8127/`
+**Without the card:** https://naomirajwanshi02.github.io/Samurai_Wear/?demo=1 · **Without any camera:** https://naomirajwanshi02.github.io/Samurai_Wear/?preview=1 · **Start with a suit:** `?suit=oyoroi`
 **The card to scan:** [`target.png`](target.png)
 
 ## How it works
