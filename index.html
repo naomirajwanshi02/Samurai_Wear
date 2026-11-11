@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#ecdfc6">
+<title>Samurai Wear AR</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9B%A9%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/anatomy/iso.css">
+<link rel="stylesheet" href="css/anatomy-sepia.css">
+<link rel="stylesheet" href="css/app.css">
+<!-- mind-ar@1.2.5 imports sRGBEncoding, removed in three r162: keep three pinned at 0.160.0. -->
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+    "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js",
+    "mindar-face-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-face-three.prod.js"
+  }
+}
+</script>
+</head>
+<body class="iso ar" data-theme="sepia">
+
+<!-- camera + 3D (card scanner, then the selfie dressing stage) -->
+<div id="ar"></div>
+
+<!-- ============ 0 · CAMERA PERMISSION ============ -->
+<section id="perm" class="screen dim">
+  <div class="col center">
+    <div class="plate welcome">
+      <span class="corner tl">Fig. 00</span><span class="corner tr">Camera</span>
+      <div class="permicon" aria-hidden="true"><svg viewBox="0 0 48 48" width="56" height="56"><rect x="5" y="13" width="38" height="27" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M17 13l3-5h8l3 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="26.5" r="7.5" fill="none" stroke="currentColor" stroke-width="3"/></svg></div>
+      <h1>Allow camera access</h1>
+      <p>This page needs your camera. Tap the button, then choose <b>Allow</b>.</p>
+      <button class="btn red" id="permBtn">Allow camera</button>
+      <div class="status dark" id="permStatus"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 1 · VIEWFINDER: find the card ============ -->
+<div id="guide" class="overlay">
+  <div class="scan-top plate"><b>Point your camera at the card</b><span class="cap">The armour room opens as soon as it's found</span></div>
+  <div class="frame"><i></i><i></i><i></i><i></i><div class="sweep"></div></div>
+  <div class="scan-bottom">
+    <div class="status" id="scanStatus">Starting camera…</div>
+    <div class="row">
+      <button class="btn ghost small" id="scanRetry" hidden>Try again</button>
+      <a class="btn ghost small" href="target.png" target="_blank" rel="noopener">Get the card</a>
+      <button class="btn ghost small" id="scanSkip">No card? Skip</button>
+    </div>
+  </div>
+</div>
+
+<div id="found" class="overlay"><div class="plate badge"><div class="stamp">侍</div><b>Found it!</b><span>The armour room is open</span></div></div>
+
+<!-- ============ 2 · WELCOME ============ -->
+<section id="intro" class="screen dim">
+  <div class="col center">
+    <div class="plate welcome">
+      <span class="corner tl">Fig. 01</span><span class="corner tr">Samurai · 侍</span>
+      <img class="hero-mask" id="introImg" src="assets/thumbs/tosei.png" alt="">
+      <h1>Wear a samurai helmet!</h1>
+      <p><b>Samurai</b> were the warriors of old Japan. For battle they wore a <b>kabuto</b> helmet and armour made of hundreds of little plates laced together with silk.</p>
+      <ol class="steps">
+        <li><b>1</b><span>Let us use your <b>selfie camera</b></span></li>
+        <li><b>2</b><span>Pick a helmet from the bottom</span></li>
+        <li><b>3</b><span>Put the <b>face guard</b> on or off</span></li>
+        <li><b>4</b><span>Take a photo!</span></li>
+      </ol>
+      <p class="small">To dress you up we need your <b>selfie camera</b>. The video stays on this phone: nothing is recorded or sent anywhere.</p>
+      <button class="btn red" id="goBtn">Allow camera &amp; start</button>
+      <div class="status dark" id="camStatus"></div>
+      <button class="link" id="previewBtn">No camera? Look at the armour instead</button>
+      <span class="corner bl">ages 8–14</span><span class="corner br">2 suits</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 3 · THE ARMOUR ROOM ============ -->
+<div id="hud" class="overlay">
+  <div class="hud-top">
+    <div class="hud-left">
+    <div class="plate namecard" id="namecard">
+      <span class="corner tl" id="ncFig">Fig. 01</span><span class="corner tr" id="ncRole"></span>
+      <div class="nc-main"><b id="ncName"></b><span class="jp" id="ncJp"></span></div>
+      <div class="nc-blurb" id="ncBlurb"></div>
+    </div>
+    <div class="hint" id="hint" role="status" aria-live="polite"></div>
+    </div>
+    <div class="iconcol">
+      <button class="iconbtn" id="closeBtn" aria-label="Back to the card"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+      <button class="iconbtn" id="factBtn" aria-label="Did you know?"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="9.5" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M12 10.5v6" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><circle cx="12" cy="7.2" r="1.5" fill="currentColor"/></svg></button>
+    </div>
+  </div>
+
+  <div class="faceguide" id="faceGuide">
+    <svg viewBox="0 0 200 260" aria-hidden="true"><ellipse cx="100" cy="130" rx="82" ry="112" fill="none" stroke="#fff8ec" stroke-width="5" stroke-dasharray="14 12"/></svg>
+    <div class="plate">Show your face to the camera</div>
+  </div>
+  <div class="carving" id="carving"><span></span>Lacing the armour…</div>
+
+  <div class="hud-bottom">
+    <div class="actions">
+      <button class="shutter" id="shutter" aria-label="Take a photo"><i></i></button>
+    </div>
+    <div class="tray plate" id="tray" aria-label="Choose a helmet"></div>
+  </div>
+</div>
+
+<div id="flash" class="overlay"></div>
+
+<!-- ============ PHOTO ============ -->
+<section id="photo" class="screen dim">
+  <div class="col center">
+    <div class="plate photocard">
+      <span class="corner tl">Your photo</span><span class="corner tr" id="photoName"></span>
+      <img id="photoImg" alt="Your photo wearing a samurai helmet">
+      <div class="row">
+        <a class="btn red small" id="saveBtn" download="samurai.jpg">Save</a>
+        <button class="btn ghost small" id="shareBtn" hidden>Share</button>
+        <button class="btn ghost small" id="photoBack">Back</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="plate toast" id="toast"></div>
+<div class="plate errbox" id="err" hidden><b>Something went wrong</b><pre id="errText"></pre><button class="btn small" id="errBtn">Start over</button></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

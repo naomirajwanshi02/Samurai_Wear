@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Samurai Wear target maker</title>
+<style>
+  body{margin:0;padding:16px;background:#ecdfc6;color:#3b2a1c;font:14px/1.5 ui-monospace,Consolas,monospace}
+  img,canvas{max-width:100%;box-shadow:0 0 0 1px #8c7457;display:block;margin:10px 0}
+  button{font:inherit;padding:8px 14px;margin-right:6px}
+  #log{white-space:pre-wrap}
+</style></head>
+<body>
+<p>Draws <b>target.png</b> (the card you scan) from the helmet thumbnails (<code>tools/suit-sheet.html?save=1</code> first) and compiles it into
+<b>targets.mind</b> with MindAR's own compiler. Run it from <code>tools/serve.ps1</code>, which accepts the files back. <code>?build=1</code> does both.</p>
+<button id="draw">1 · Draw target</button><button id="compile">2 · Compile .mind</button>
+<div id="log"></div>
+<div id="out"></div>
+<script type="module">
+import { SUITS as MASKS } from '../js/data.js';
+
+const W = 1500, H = 1000;
+const log = (t) => { document.getElementById('log').textContent += t + '\n'; };
+const out = document.getElementById('out');
+function rng(seed){ let s = seed >>> 0 || 1; return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return (s >>> 0) / 4294967296; }; }
+const load = (src) => new Promise((ok, fail) => { const i = new Image(); i.onload = () => ok(i); i.onerror = fail; i.src = src; });
+
+async function draw(){
+  await document.fonts.load('900 40px "Yu Gothic"').catch(() => {});
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const r = rng(1185);
+  g.fillStyle = '#f1e5cc'; g.fillRect(0, 0, W, H);
+  // paper fibres and ink speckle: dense, non-repeating texture is what the tracker locks onto
+  for (let i = 0; i < 2600; i++){
+    const x = r() * W, y = r() * H, a = r() * 6.28, l = 3 + r() * 14;
+    g.strokeStyle = `rgba(140,116,87,${0.12 + r() * 0.25})`; g.lineWidth = 0.6 + r();
+    g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+  }
+  for (let i = 0; i < 900; i++){ g.fillStyle = `rgba(59,42,28,${0.2 + r() * 0.5})`; g.beginPath(); g.arc(r() * W, r() * H, 0.6 + r() * 1.8, 0, 6.28); g.fill(); }
+  // Anatomy plate frame and ruler
+  g.strokeStyle = '#3b2a1c'; g.lineWidth = 4; g.strokeRect(22, 22, W - 44, H - 44);
+  g.strokeStyle = '#8c7457'; g.lineWidth = 1.5; g.strokeRect(34, 34, W - 68, H - 68);
+  g.fillStyle = '#5b4630'; g.font = '13px Consolas,monospace';
+  for (let x = 40, n = 0; x < W - 40; x += 12, n++){
+    const major = n % 5 === 0; g.strokeStyle = '#3b2a1c'; g.lineWidth = major ? 2 : 1;
+    g.beginPath(); g.moveTo(x, 34); g.lineTo(x, 34 + (major ? 16 : 8)); g.stroke();
+    if (n % 10 === 0) g.fillText(String(n), x + 3, 64);
+  }
+  for (let y = 40, n = 0; y < H - 40; y += 12, n++){
+    const major = n % 5 === 0; g.lineWidth = major ? 2 : 1;
+    g.beginPath(); g.moveTo(34, y); g.lineTo(34 + (major ? 16 : 8), y); g.stroke();
+  }
+  for (const [x, y] of [[44, 44], [W - 44, 44], [44, H - 44], [W - 44, H - 44]]){ g.fillStyle = '#d2bd98'; g.beginPath(); g.arc(x, y, 5, 0, 6.28); g.fill(); g.lineWidth = 1.5; g.stroke(); }
+  // title block
+  g.fillStyle = '#2b1e13'; g.font = '700 70px Georgia,"Times New Roman",serif'; g.fillText('SAMURAI', 80, 150);
+  g.fillStyle = '#b5452f'; g.font = 'italic 700 112px Georgia,"Times New Roman",serif'; g.fillText('Wear', 84, 270);
+  g.fillStyle = '#5b4630'; g.font = '22px Consolas,monospace'; g.fillText('FIG. 01 · SCAN ME TO WEAR A HELMET · 兜・鎧', 84, 330);
+  // big seal
+  g.save(); g.translate(740, 210); g.rotate(-0.22);
+  g.strokeStyle = '#b5452f'; g.lineWidth = 8; g.beginPath(); g.arc(0, 0, 78, 0, 6.28); g.stroke();
+  g.fillStyle = '#b5452f'; g.font = '900 84px "Yu Gothic","Meiryo",sans-serif'; g.textAlign = 'center'; g.fillText('侍', 0, 30);
+  g.restore(); g.textAlign = 'left';
+  // the eight masks, skewed and scattered, each with its label plate
+  const spots = [[860, 40, 430, -6], [500, 420, 470, 7]];
+  for (let i = 0; i < MASKS.length; i++){
+    const m = MASKS[i], [x, y, s, rot] = spots[i];
+    const img = await load(`../assets/thumbs/${m.id}.png?${Date.now()}`);
+    g.save(); g.translate(x + s / 2, y + s / 2); g.rotate(rot * Math.PI / 180);
+    g.drawImage(img, -s / 2, -s / 2, s, s);
+    g.fillStyle = '#3b2a1c'; g.font = '700 17px Consolas,monospace'; g.textAlign = 'center';
+    g.fillText(`${String(i + 1).padStart(2, '0')} ${m.name.toUpperCase()}`, 0, s / 2 + 8);
+    g.fillStyle = '#8c7457'; g.font = '17px "Yu Gothic","Meiryo",sans-serif'; g.fillText(m.jp, 0, s / 2 + 30);
+    g.restore();
+  }
+  // vertical kana down the right edge
+  g.fillStyle = '#3b2a1c'; g.font = '900 96px "Yu Gothic","Meiryo",sans-serif'; g.textAlign = 'center';
+  ['さ', 'む', 'ら', 'い'].forEach((ch, i) => g.fillText(ch, 1405, 520 + i * 110));
+  g.strokeStyle = '#b5452f'; g.lineWidth = 3; g.strokeRect(1350, 430, 110, 460);
+  // the roles, bottom left, as fine print
+  g.textAlign = 'left'; g.font = '16px Consolas,monospace';
+  ['KABUTO 兜 · HELMET', 'SHIKORO 錣 · NECK GUARD', 'FUKIGAESHI 吹返 · FLAPS', 'MENPŌ 面頬 · FACE GUARD', 'KUWAGATA 鍬形 · HORNS', 'SODE 袖 · SHOULDER GUARDS', 'DŌ 胴 · CUIRASS', 'ODOSHI 縅 · LACING'].forEach((t, i) => { g.fillStyle = i % 3 ? '#5b4630' : '#b5452f'; g.fillText(`${String(i + 1).padStart(2, '0')} ${t}`, 86, 430 + i * 36); });
+  const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
+  out.innerHTML = '';
+  const shown = new Image(); shown.src = URL.createObjectURL(blob); out.appendChild(shown);
+  const res = await fetch('/__save?name=target.png', { method: 'POST', body: blob });
+  log(`target.png: ${res.ok ? 'saved' : 'save failed'} (${(blob.size / 1024).toFixed(0)} KB)`);
+}
+
+async function compile(){
+  log('loading MindAR compiler…');
+  await import('https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image.prod.js');
+  const img = new Image();
+  img.src = '../target.png?' + Date.now();
+  await new Promise((ok, fail) => { if (img.complete && img.naturalWidth) ok(); else { img.onload = ok; img.onerror = fail; } });
+  const compiler = new window.MINDAR.IMAGE.Compiler();
+  let last = -10;
+  const data = await compiler.compileImageTargets([img], (p) => { if (p - last >= 10){ last = p; log(`compiling ${p.toFixed(0)}%`); } });
+  const t = data[0];
+  log(`detection points: ${t.matchingData.reduce((n, l) => n + l.maximaPoints.length + l.minimaPoints.length, 0)} over ${t.matchingData.length} scales; tracking points: ${t.trackingData.reduce((n, l) => n + l.points.length, 0)}`);
+  const buf = await compiler.exportData();
+  const res = await fetch('/__save?name=targets.mind', { method: 'POST', body: new Blob([buf]) });
+  log(`targets.mind: ${res.ok ? 'saved' : 'save failed'}`);
+  window.__done = true;
+}
+
+// a hidden browser tab pauses animation frames, which stalls the compiler: tick on a timer instead
+if (document.hidden) window.requestAnimationFrame = (cb) => setTimeout(() => cb(performance.now()), 4);
+document.getElementById('draw').onclick = draw;
+document.getElementById('compile').onclick = compile;
+if (new URLSearchParams(location.search).has('build')) draw().then(compile).catch((e) => { log('ERROR ' + e); window.__done = 'error'; });
+</script>
+</body></html>

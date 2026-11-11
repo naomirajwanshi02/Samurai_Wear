@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Samurai Wear — suit sheet</title>
+<style>
+  body{margin:0;padding:12px;background:#ecdfc6;color:#3b2a1c;font:13px/1.5 ui-monospace,Consolas,monospace}
+  canvas{display:block;max-width:100%;box-shadow:0 0 0 1px #8c7457;background:#2b1e13}
+  #log{white-space:pre-wrap}
+</style>
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+               "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+</head>
+<body>
+<p>Both suits, lit the way the AR view lights them. <code>?id=tosei</code> one suit, <code>&amp;yaw=0.5&amp;pitch=0.1</code> turns it,
+<code>&amp;menpo=0</code> / <code>&amp;body=0</code> leave parts off, <code>&amp;dist=70</code> moves the camera, <code>?save=1</code> writes
+<b>assets/thumbs/&lt;id&gt;.png</b> (helmet only) through <code>tools/serve.ps1</code>.</p>
+<div id="log"></div>
+<script type="module">
+import * as THREE from 'three';
+import { buildSuit, setMenpo, occluders } from '../js/armour.js';
+import { setupLook } from '../js/look.js';
+import { NECK, headForm } from '../js/stage.js';
+import { BY_ID } from '../js/data.js';
+
+const q = new URLSearchParams(location.search);
+const ids = q.get('id') ? [q.get('id')] : ['tosei', 'oyoroi'];
+const yaw = parseFloat(q.get('yaw') ?? '0.42'), pitch = parseFloat(q.get('pitch') ?? '0.06');
+const save = q.has('save');
+const withBody = !save && q.get('body') !== '0';
+const cell = save ? 512 : ids.length === 1 ? 900 : 560;
+const cols = save ? 1 : ids.length, rows = 1;
+const log = (t) => { document.getElementById('log').textContent += t + '\n'; };
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(cell * cols, cell * rows);
+renderer.setClearColor(0x000000, 0);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+setupLook(renderer, scene);
+const cam = new THREE.PerspectiveCamera(30, 1, 1, 600);
+const dist = parseFloat(q.get('dist') ?? (save ? '92' : withBody ? '125' : '82'));
+cam.position.set(0, withBody ? -6 : 3, dist);
+cam.lookAt(0, withBody ? -8 : save ? 4.5 : 3, 0);
+
+async function save1(id){
+  const c = document.createElement('canvas'); c.width = c.height = cell;
+  c.getContext('2d').drawImage(renderer.domElement, 0, 0, cell, cell, 0, 0, cell, cell);
+  const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
+  const res = await fetch(`/__save?name=${encodeURIComponent(`assets/thumbs/${id}.png`)}`, { method: 'POST', body: blob });
+  log(`${id}.png ${res.ok ? 'saved' : 'FAILED ' + res.status}`);
+}
+
+let holderHead = null;
+renderer.setScissorTest(true);
+for (let i = 0; i < ids.length; i++){
+  const id = ids[i];
+  const s = buildSuit(id, { aniso: renderer.capabilities.getMaxAnisotropy() });
+  setMenpo(s, q.has('menpo') ? q.get('menpo') !== '0' : BY_ID[id].menpo);
+  if (q.get('head') !== '0' && !save) holderHead = headForm();
+  log(`${id}: built in ${s.userData.buildMs} ms`);
+  const holder = new THREE.Group();
+  holder.add(s); if (holderHead) holder.add(holderHead); else holder.add(occluders());
+  if (withBody){ s.userData.body.position.copy(NECK); holder.add(s.userData.body); }
+  holder.rotation.set(pitch, yaw, 0);
+  scene.add(holder);
+  const x = save ? 0 : i * cell;
+  renderer.setViewport(x, 0, cell, cell); renderer.setScissor(x, 0, cell, cell);
+  if (save) renderer.clear();
+  renderer.render(scene, cam);
+  if (save) await save1(id);
+  scene.remove(holder);
+}
+window.__done = true;
+</script>
+</body></html>
