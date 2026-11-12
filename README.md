@@ -17,6 +17,13 @@ with its iron face guard (happuri) and armour, then take a photo. Made for ages 
    helmet is worn the way a head-wear lens is:
    - **Pinned to the head.** The helmet rides the whole-face pose (MindAR's `faceMatrix`), so it sits on
      your head and turns with it.
+   - **Steady.** A helmet magnifies tracking noise (its crown and horn tips are 15–25 cm from the middle of
+     the face), so the pose is stabilised with a One Euro filter (`js/stabilise.js`): heavy smoothing when
+     you are still, opening up as you move so it does not lag. Position, depth (the noisiest) and rotation
+     each have their own filter, and the face guard's landmarks are smoothed too. MindAR's own filter is
+     kept light (its units are milliseconds, so a large `filterBeta` switches its smoothing off). On a
+     noisy test feed this made the crown about 3× steadier frame to frame, and on a moving face it trails
+     the raw pose by about 1.5 mm.
    - **Wraps the head.** The bowl is sized for a head with hair (children's heads are large for their faces):
      its rim sits on the brows at the front and drops to the nape at the back. The neck guard hangs from the
      rim all the way round and its top lames come forward past the ears and temples; the flaps turn back from
@@ -115,7 +122,7 @@ Then open http://localhost:8127/.
 
 **Testing face tracking without a camera:** `?demo=1&fakecam=<image url>` plays a photo (it must allow
 cross-origin use, as Wikimedia Commons images do) as the selfie video, and real face tracking runs on it.
-`&fakezoom=2` brings the face closer and `&fakemove=1` sways it. For example,
+`&fakezoom=2` brings the face closer, `&fakemove=1` sways it and `&fakenoise=1` adds camera grain and shake (for testing the stabiliser). For example,
 `?demo=1&fakezoom=2.4&fakecam=https%3A%2F%2Fthumb.wikimedia.org%2Fwikipedia%2Fcommons%2Fthumb%2F0%2F06%2FBoy_smiling.jpg%2F960px-Boy_smiling.jpg`
 (“Boy smiling”, CC BY 2.0, Wikimedia Commons). On a phone the page must be served over HTTPS (for example GitHub Pages,
 like the other repos), because phones only allow the camera on secure pages.

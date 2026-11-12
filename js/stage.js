@@ -13,6 +13,7 @@ import { setupLook, roomLight } from './look.js';
 import { BY_ID } from './data.js';
 import { bindToFace, followFace } from './face-fit.js';
 import * as FACE from './face-model.js';
+import { PoseFilter, LandmarkFilter } from './stabilise.js';
 
 export const NECK = new THREE.Vector3(0, -8, -3.5); // where the body hangs from, in face space
 
@@ -80,15 +81,26 @@ function frame(now){
 }
 
 const _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _n = new THREE.Vector3(), _id = new THREE.Quaternion();
+const _m = new THREE.Matrix4(), _one = new THREE.Vector3(1, 1, 1);
 function readFace(dt){
   const est = R.mindar.getLatestEstimate();
   const has = !!est;
-  if (has !== R.hasFace){ R.hasFace = has; R.onFace?.(has); }
+  if (has !== R.hasFace){ R.hasFace = has; R.onFace?.(has); if (!has){ R.pose.reset(); R.marks.reset(); } }
   R.face.visible = has; R.torso.visible = has;
   if (!has) return;
-  R.face.matrix.set(...est.faceMatrix); R.face.matrixWorldNeedsUpdate = true;
-  if (R.current) followFace(R.current.userData.face, est.metricLandmarks);
-  if (R.swap?.old) followFace(R.swap.old.userData.face, est.metricLandmarks);
+  // stabilise each new pose from the tracker (see stabilise.js); between updates hold it
+  if (est !== R.lastEst){
+    R.lastEst = est;
+    const t = performance.now() / 1000;
+    _m.set(...est.faceMatrix).decompose(_p, _q, _s);
+    R.pose.filter(t, _p, _q);
+    R.lms = R.marks.filter(t, est.metricLandmarks);
+    R.face.matrix.compose(R.pose.p, R.pose.q, _one); R.face.matrixWorldNeedsUpdate = true;
+    // keep the live face-mesh occluder on the same steadied pose as the helmet
+    if (R.faceOcc){ R.faceOcc.matrix.copy(R.face.matrix); R.faceOcc.matrixWorldNeedsUpdate = true; }
+    if (R.current) followFace(R.current.userData.face, R.lms);
+    if (R.swap?.old) followFace(R.swap.old.userData.face, R.lms);
+  } else if (R.faceOcc){ R.faceOcc.matrix.copy(R.face.matrix); R.faceOcc.matrixWorldNeedsUpdate = true; }
   // the body hangs from the neck and turns only a quarter as far as the head
   R.face.matrix.decompose(_p, _q, _s);
   _n.copy(NECK).applyMatrix4(R.face.matrix);
@@ -163,6 +175,10 @@ function fakeStream(src){
       const c = document.createElement('canvas'); c.width = 1280; c.height = 720;
       const g = c.getContext('2d');
       const move = new URLSearchParams(location.search).has('fakemove');
+      // &fakenoise=1: sensor grain and a pixel of shake every frame, like a real phone camera
+      const noisy = new URLSearchParams(location.search).has('fakenoise');
+      const grain = document.createElement('canvas'); grain.width = grain.height = 256;
+      if (noisy){ const gg = grain.getContext('2d'), id = gg.createImageData(256, 256); for (let i = 0; i < id.data.length; i += 4){ const v = Math.random() * 255; id.data[i] = id.data[i + 1] = id.data[i + 2] = v; id.data[i + 3] = 255; } gg.putImageData(id, 0, 0); }
       const zoom = parseFloat(new URLSearchParams(location.search).get('fakezoom') || '1');
       const draw = () => {
         const t = performance.now() / 1000;
@@ -171,8 +187,15 @@ function fakeStream(src){
         g.save();
         g.translate(c.width / 2 + (move ? 90 * Math.sin(t * 0.5) : 0), c.height / 2 + (move ? 30 * Math.sin(t * 0.9) : 0));
         g.rotate(move ? 0.18 * Math.sin(t * 0.8) : 0);
+        if (noisy) g.translate((Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3);
         g.drawImage(img, -img.width * k / 2, -img.height * k / 2, img.width * k, img.height * k);
         g.restore();
+        if (noisy){
+          g.save(); g.globalAlpha = 0.12; g.globalCompositeOperation = 'overlay';
+          const ox = Math.random() * 256, oy = Math.random() * 256;
+          for (let x = -ox; x < c.width; x += 256) for (let y = -oy; y < c.height; y += 256) g.drawImage(grain, x, y);
+          g.restore();
+        }
       };
       draw(); setInterval(draw, 33);
       ok(c.captureStream(30));
@@ -186,7 +209,11 @@ export async function startCamera(container, { onStatus, onFace }){
   R.mode = 'camera'; R.container = container; R.onFace = onFace;
   onStatus?.('Loading the face tracker…');
   const { MindARThree } = await import('mindar-face-three');
-  const mindar = new MindARThree({ container, uiLoading: 'no', uiScanning: 'no', uiError: 'no', filterMinCF: 0.001, filterBeta: 15 });
+  // MindAR's own filter works in milliseconds (minCF 0.001 = 1 Hz); with a large beta any small
+  // wobble opens it right up, so the noise passes straight through. Keep it light and steady
+  // (5 Hz, no beta) and do the real stabilising in PoseFilter, in seconds, per pose component.
+  const mindar = new MindARThree({ container, uiLoading: 'no', uiScanning: 'no', uiError: 'no', filterMinCF: 0.005, filterBeta: 0 });
+  R.pose = new PoseFilter(); R.marks = new LandmarkFilter(); R.lastEst = null;
   mindar._startVideo = hdVideo.bind(mindar);
   mindar.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   R.mindar = mindar;
@@ -198,7 +225,7 @@ export async function startCamera(container, { onStatus, onFace }){
   // Like a head-wear lens: the live face mesh (468 landmarks, reshaped every frame) is drawn
   // into depth only, so any part of the helmet that is behind your real face — the far flap,
   // the far side of the neck guard when you turn — hides behind it exactly.
-  const faceOcc = mindar.addFaceMesh();
+  const faceOcc = mindar.addFaceMesh(); R.faceOcc = faceOcc;
   faceOcc.material = new THREE.MeshBasicMaterial({ colorWrite: false, side: THREE.DoubleSide });
   faceOcc.renderOrder = -1;
   mindar.scene.add(faceOcc, face, torso);
@@ -261,7 +288,7 @@ export function stop(){
   R.cache.clear();
   if (R.mode === 'preview') R.renderer?.dispose();
   if (R.container){ R.container.innerHTML = ''; R.container.classList.remove('preview'); }
-  Object.assign(R, { mode: null, current: null, currentId: null, video: null, hasFace: false, swap: null, light: null });
+  Object.assign(R, { mode: null, current: null, currentId: null, video: null, hasFace: false, swap: null, light: null, faceOcc: null, lastEst: null, lms: null });
 }
 
 // ------------------------------------------------------------------ photo
