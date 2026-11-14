@@ -58,13 +58,15 @@ async function draw(){
   g.strokeStyle = '#b5452f'; g.lineWidth = 8; g.beginPath(); g.arc(0, 0, 78, 0, 6.28); g.stroke();
   g.fillStyle = '#b5452f'; g.font = '900 84px "Yu Gothic","Meiryo",sans-serif'; g.textAlign = 'center'; g.fillText('侍', 0, 30);
   g.restore(); g.textAlign = 'left';
-  // the eight masks, skewed and scattered, each with its label plate
-  const spots = [[700, 150, 640, -5]];
+
+  // the reference illustration of the armour (cut out of its white paper by tools/cutout.html)
+  const spots = [[625, 55, 850, -3]]; // centred at x 1050, y 480
   for (let i = 0; i < MASKS.length; i++){
     const m = MASKS[i], [x, y, s, rot] = spots[i];
-    const img = await load(`../assets/thumbs/${m.id}.png?${Date.now()}`);
+    const img = await load(`../assets/gusoku-illustration.png?${Date.now()}`);
+    const w = s * img.width / img.height;
     g.save(); g.translate(x + s / 2, y + s / 2); g.rotate(rot * Math.PI / 180);
-    g.drawImage(img, -s / 2, -s / 2, s, s);
+    g.drawImage(img, -w / 2, -s / 2, w, s);
     g.fillStyle = '#3b2a1c'; g.font = '700 17px Consolas,monospace'; g.textAlign = 'center';
     g.fillText(`${String(i + 1).padStart(2, '0')} ${m.name.toUpperCase()}`, 0, s / 2 + 8);
     g.fillStyle = '#8c7457'; g.font = '17px "Yu Gothic","Meiryo",sans-serif'; g.fillText(m.jp, 0, s / 2 + 30);

@@ -173,3 +173,14 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .namecard .nc-blurb{transition:opacity .25s}
 .namecard.compact{padding-bottom:8px}
 .namecard.compact .nc-blurb{display:none}
+/* the welcome and permission cards: text runs the full width of the box, with a small margin */
+.welcome{padding:30px 14px 26px}
+.welcome p,.welcome p.small{max-width:none;margin:0}
+.welcome .btn{width:100%}
+.hero-figure{display:block;height:min(34vh,300px);width:auto;max-width:100%;margin:-4px auto 2px;object-fit:contain;filter:drop-shadow(0 8px 10px #3b2a1c55)}
+/* toggles: the same helmet thumbnail as the suit chip; off is just dimmer, never crossed out */
+.chip.toggle{width:84px;justify-content:flex-start;gap:1px}
+.chip.toggle[aria-pressed="false"] b{text-decoration:none}
+.chip.toggle[aria-pressed="false"]{opacity:.55;filter:grayscale(.6)}
+/* the name card has no corner labels now */
+.namecard{padding-top:10px}

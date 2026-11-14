@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Samurai Wear — cut out the illustration</title>
+<style>body{margin:0;padding:12px;background:#9a8c78;font:13px ui-monospace,Consolas,monospace}canvas{max-width:100%;display:block;margin-top:8px;background:repeating-conic-gradient(#ccc 0 25%,#fff 0 50%) 0 0/20px 20px}</style></head>
+<body>
+<p>Removes the white paper round <b>assets/refs/gusoku-1650-ref.jpg</b>: a flood fill from the edges takes away the near-white
+background (not the white inside the drawing, like the moustache), softens the edge and crops to the figure. Writes
+<b>assets/gusoku-illustration.png</b> through <code>tools/serve.ps1</code>.</p>
+<div id="log"></div>
+<script type="module">
+const log = (t) => { document.getElementById('log').textContent += t + '\n'; };
+const img = new Image();
+await new Promise((ok, fail) => { img.onload = ok; img.onerror = fail; img.src = '../assets/refs/gusoku-1650-ref.jpg?' + Date.now(); });
+const W = img.naturalWidth, H = img.naturalHeight;
+const c = document.createElement('canvas'); c.width = W; c.height = H;
+const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0);
+const id = g.getImageData(0, 0, W, H), d = id.data;
+// how "paper-like" a pixel is: bright and colourless
+const paper = (i) => { const r = d[i], gg = d[i + 1], b = d[i + 2]; const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b); return mx > 222 && mx - mn < 26; };
+const bg = new Uint8Array(W * H), stack = [];
+for (let x = 0; x < W; x++){ stack.push(x, (H - 1) * W + x); }
+for (let y = 0; y < H; y++){ stack.push(y * W, y * W + W - 1); }
+while (stack.length){
+  const p = stack.pop();
+  if (bg[p] || !paper(p * 4)) continue;
+  bg[p] = 1;
+  const x = p % W, y = (p / W) | 0;
+  if (x > 0) stack.push(p - 1); if (x < W - 1) stack.push(p + 1); if (y > 0) stack.push(p - W); if (y < H - 1) stack.push(p + W);
+}
+// enclosed paper (between the arms and the body, under the neck guard): any other paper-coloured
+// patch big enough to be background, not a white detail such as the moustache
+const seen = new Uint8Array(W * H);
+for (let s = 0; s < W * H; s++){
+  if (bg[s] || seen[s] || !paper(s * 4)) continue;
+  const comp = [], st = [s]; seen[s] = 1;
+  while (st.length){
+    const p = st.pop(); comp.push(p);
+    const x = p % W, y = (p / W) | 0;
+    for (const q of [x > 0 ? p - 1 : -1, x < W - 1 ? p + 1 : -1, y > 0 ? p - W : -1, y < H - 1 ? p + W : -1]){
+      if (q < 0 || seen[q] || !paper(q * 4)) continue; seen[q] = 1; st.push(q);
+    }
+  }
+  // keep it only if it is truly paper-white (the moustache is creamier) and not tiny
+  let white = 0; for (const p of comp){ const i = p * 4, mx = Math.max(d[i], d[i + 1], d[i + 2]), mn = Math.min(d[i], d[i + 1], d[i + 2]); if (mx > 246 && mx - mn < 12) white++; }
+  if (comp.length > 6000 || (comp.length > 600 && white / comp.length > 0.85)) for (const p of comp) bg[p] = 1;
+}
+// soften: pixels next to the background fade by how bright they are (anti-aliased edge)
+let x0 = W, y0 = H, x1 = 0, y1 = 0;
+for (let y = 0; y < H; y++) for (let x = 0; x < W; x++){
+  const p = y * W + x, i = p * 4;
+  if (bg[p]){ d[i + 3] = 0; continue; }
+  let near = 0;
+  for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++){ const q = p + dy * W + dx; if (q >= 0 && q < W * H && bg[q]) near++; }
+  if (near){ const mx = Math.max(d[i], d[i + 1], d[i + 2]); d[i + 3] = Math.round(255 * Math.min(1, Math.max(0, (255 - mx) / 70 + 0.25))); }
+  if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+}
+g.putImageData(id, 0, 0);
+const pad = 8, sw = x1 - x0 + 1 + pad * 2, sh = y1 - y0 + 1 + pad * 2;
+const k = Math.min(1, 1400 / sh), cw = Math.round(sw * k), ch = Math.round(sh * k);
+const out = document.createElement('canvas'); out.width = cw; out.height = ch;
+const og = out.getContext('2d'); og.imageSmoothingQuality = 'high';
+og.drawImage(c, x0 - pad, y0 - pad, sw, sh, 0, 0, cw, ch);
+document.body.appendChild(out);
+const blob = await new Promise((ok) => out.toBlob(ok, 'image/png'));
+const res = await fetch('/__save?name=assets/gusoku-illustration.png', { method: 'POST', body: blob });
+log(`${W}×${H} → ${cw}×${ch}, ${(blob.size / 1024).toFixed(0)} KB, ${res.ok ? 'saved' : 'FAILED ' + res.status}`);
+window.__done = true;
+</script></body></html>

@@ -107,7 +107,7 @@ function lacingMat(spec, aniso){
 
 // ------------------------------------------------------------------ the helmet bowl
 // Sized for a head with hair; the rim sits on the brows at the front and drops to the nape.
-const BOWL = { cy: 3.3, cz: -4.3, ax: 10.1, ay: 10.3, az: 11.3, yf: 5.8, yb: 0.8 };
+const BOWL = { cy: 3.2, cz: -4.4, ax: 10.6, ay: 11.4, az: 11.8, yf: 5.0, yb: 0.8 };
 export const rimY = (t) => BOWL.yb + (BOWL.yf - BOWL.yb) * (1 + Math.cos(t)) / 2;
 function rimPhi(t){ return Math.acos((rimY(t) - BOWL.cy) / BOWL.ay); }
 function bowlPoint(t, s, k = 1){
@@ -156,7 +156,7 @@ function visor(mat){
 // the front with fish-tail tips, and in the middle a gilt ring above a gilt bell-shaped ornament.
 function crest(mat){
   const g = new THREE.Group(); g.name = 'kuwagata';
-  const y0 = 6.6, z0 = zFront(y0) + 1.0, tilt = -0.22;
+  const y0 = BOWL.yf + 0.8, z0 = zFront(y0) + 1.0, tilt = -0.22;
   const place = (geo, dz = 0) => { geo.rotateX(tilt); geo.translate(0, y0, z0 + dz); return geo; };
   // the stand: a tall rounded arch of brown lacquer behind everything
   const st = new THREE.Shape();
@@ -204,7 +204,7 @@ function crest(mat){
 // ------------------------------------------------------------------ neck guard and flaps
 // 笠錣: a wide umbrella-shaped neck guard of five black lames with rows of orange studs, the
 // lowest lame red-brown, hung from just under the rim all the way round.
-const SHIKORO = { lames: 5, r0: 10.9, r1: 21.5, depth: 9.5, ez: 1.05, a0: 0.98 };
+const SHIKORO = { lames: 5, r0: 10.9, r1: 18.6, depth: 9.5, ez: 1.05, a0: 0.98 };
 function shikoro(aniso){
   const S = SHIKORO, g = new THREE.Group(); g.name = 'shikoro';
   const H = S.depth, lh = H / S.lames, over = 0.5;
@@ -228,6 +228,23 @@ function shikoro(aniso){
     lames.push(f);
   }
   return { g, lames };
+}
+
+// The helmet's dark lining: a hood round the sides and back of the head from the rim down past
+// the jaw, so no hair or ears show between the mask and the neck guard (in the drawing the space
+// round the face inside the helmet is dark). Its front edges stop just beside the face.
+function lining(){
+  const A0 = 1.22, cz = -3.7, rx = 8.6, rz = 9.9;
+  const f = (u, v) => {
+    const t = A0 + u * (TAU - 2 * A0);
+    const yBot = -6.8 - 2.6 * (1 - Math.cos(t)) / 2; // lower at the back, over the nape
+    const y = yBot + (rimY(t) + 0.6 - yBot) * v;
+    const k = 1 + 0.04 * Math.sin(Math.PI * v);
+    return [rx * k * Math.sin(t), y, cz + rz * k * Math.cos(t)];
+  };
+  const m = new THREE.Mesh(surface(90, 16, f), M({ color: '#0e0b0a', roughness: 0.92, envMapIntensity: 0.2, side: THREE.DoubleSide }));
+  m.name = 'lining';
+  return m;
 }
 
 // 吹返: the big side flaps, standing up beside the bowl and facing forward: black lacquer with
@@ -488,7 +505,7 @@ export function buildSuit(id = 'gusoku', { aniso = 8, menpo: withFace } = {}){
   const root = new THREE.Group(); root.name = id;
   const head = new THREE.Group(); head.name = 'kabuto';
   const sk = shikoro(aniso);
-  head.add(bowl(mat), visor(mat), crest(mat), sk.g, flaps(mat, sk.lames), chinCord(mat));
+  head.add(bowl(mat), lining(), visor(mat), crest(mat), sk.g, flaps(mat, sk.lames), chinCord(mat));
   const face = new THREE.Group(); face.name = 'faceguard';
   face.add(menpo(mat, aniso));
   const lower = yodare(aniso);

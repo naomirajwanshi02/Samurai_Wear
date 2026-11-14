@@ -6,7 +6,7 @@ from about 1650 in the Metropolitan Museum of Art, with its iron face mask (menp
 
 **Play:** https://naomirajwanshi02.github.io/Samurai_Wear/ · **Locally:** `http://localhost:8127/`
 **Without the card:** https://naomirajwanshi02.github.io/Samurai_Wear/?demo=1 · **Without any camera:** https://naomirajwanshi02.github.io/Samurai_Wear/?preview=1
-**The card to scan:** [`target.png`](target.png)
+**The card to scan:** [`target.png`](target.png), the reference illustration of the armour on the Anatomy card
 
 ## How it works
 
@@ -35,7 +35,12 @@ from about 1650 in the Metropolitan Museum of Art, with its iron face mask (menp
    - **Fits the face.** The iron menpō is *skinned* to the live landmarks so it follows your face shape;
      its mouth stays shut when you talk.
    - The armour hangs from your neck and turns only a quarter as far as your head, the way a body does.
-   - The name card shrinks to its title after 5 seconds so it never hides the helmet; tap it to open it.
+   - **Covers the whole head.** The bowl is sized for a head with hair, its brim sits on the eyebrows, and a dark
+     lining wraps the sides and back of the head from the rim to below the jaw, so no hair or ears show between
+     the mask and the neck guard (in the drawing, the space round the face inside the helmet is dark).
+   - The screen stays clear for the AR: the name card shows just the name (it shrinks after 5 seconds; tap to
+     open it), and there is no pop-up facts button. The Face guard and Armour toggles show the helmet thumbnail
+     and go dim when off.
 5. **Toggles.** **Face guard** puts the menpō and its throat guard on or off (it starts on; the orange chin cords tie the helmet on either way).
    **Armour** shows or hides the cuirass, shoulder guards and skirt.
 6. **Photo.** The round button saves the mirrored selfie with the armour and a small caption plate.
@@ -81,7 +86,7 @@ holds the token set; the kit is in [`vendor/anatomy/`](vendor/anatomy); the skil
 
 - Print `target.png` about **18 cm wide** (3:2, about 18 × 12 cm) on **matte** paper.
 - Hold the phone 20–40 cm away, in even light. The card also works on a laptop or tablet screen.
-- The compiled target scores **3,371 detection points over 11 scales, with 45 tracking points**
+- The compiled target scores **3,407 detection points over 11 scales, with 46 tracking points**
   (Noh_Masks' card: 3,623 / 52).
 
 ## Files
@@ -97,8 +102,9 @@ holds the token set; the kit is in [`vendor/anatomy/`](vendor/anatomy); the skil
 | `js/data.js` | Names, kanji, eras, kid-friendly blurbs, parts and facts. |
 | `js/face-fit.js` / `js/face-model.js` | MindAR's canonical face, the face shell the menpō is carved on, and the landmark skinning (shared with Noh_Masks). |
 | `js/look.js` | Lighting, environment, tone mapping and room-light matching (shared with Noh_Masks). |
+| `tools/cutout.html` | Cuts the reference drawing out of its white paper into `assets/gusoku-illustration.png` (used on the welcome card and the scan card). |
 | `tools/suit-sheet.html` | Renders the suit on the canonical face. `?yaw=0.5&menpo=0&body=0&dist=80`. `?save=1` rewrites `assets/thumbs/oyoroi.png`. |
-| `tools/make-target.html` | Redraws `target.png` from the thumbnails and compiles `targets.mind` (`?build=1`). |
+| `tools/make-target.html` | Redraws `target.png` with the cut-out illustration and compiles `targets.mind` (`?build=1`). |
 | `tools/serve.ps1` | A local dev server (no Node or Python needed); localhost counts as secure for the camera. |
 
 ## Run locally

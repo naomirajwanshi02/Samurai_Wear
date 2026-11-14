@@ -5,7 +5,7 @@
 // ?preview=1  no camera at all: the armour stands on a head-form
 // ?suit=gusoku  the suit (there is one: the Met's gusoku, c. 1650)
 
-import { SUITS, BY_ID, PARTS, EXTRA_FACTS } from './data.js';
+import { SUITS, BY_ID } from './data.js';
 import { scan, stopScan } from './scan.js';
 import * as Stage from './stage.js';
 
@@ -92,7 +92,6 @@ function openIntro(){
   S.phase = 'intro';
   stopScan();
   overlay('guide', false);
-  $('introImg').src = `assets/thumbs/${S.suit}.png`;
   $('camStatus').textContent = '';
   show('intro');
 }
@@ -124,10 +123,6 @@ async function start(preview = false){
 // The face guard follows each suit's reference until the wearer flips it themselves.
 const menpoOn = () => (S.menpo === null ? BY_ID[S.suit].menpo : S.menpo);
 
-const ICONS = {
-  menpo: '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 10q13-6 26 0l-1 13q-2 9-12 12Q10 32 8 23z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M20 12v8l-2 3h4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14 27q6 3 12 0" fill="none" stroke="#b5452f" stroke-width="3" stroke-linecap="round"/></svg>',
-  armour: '<svg viewBox="0 0 40 40" aria-hidden="true"><path d="M12 6h16l2 5-3 2v19H13V13l-3-2z" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/><path d="M13 18h14M13 23h14M13 28h14" stroke="#3f86a8" stroke-width="2"/><path d="M10 11l-6 3 1 14 5-2M30 11l6 3-1 14-5-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>',
-};
 function buildTray(){
   const tray = $('tray');
   tray.innerHTML = '';
@@ -144,7 +139,7 @@ function buildTray(){
   for (const [key, label] of [['menpo', 'Face guard'], ['armour', 'Armour']]){
     const b = document.createElement('button');
     b.className = 'chip toggle'; b.id = `tg-${key}`;
-    b.innerHTML = `${ICONS[key]}<b>${label}</b><small>${key === 'menpo' ? '面頬' : '鎧'}</small>`;
+    b.innerHTML = `<img src="assets/thumbs/${S.suit}.png" alt=""><b>${label}</b><small>${key === 'menpo' ? '面頬' : '鎧'}</small>`;
     b.addEventListener('click', () => toggle(key));
     tray.appendChild(b);
   }
@@ -166,8 +161,6 @@ async function select(id, { quiet = false } = {}){
   const m = BY_ID[id];
   S.suit = id; store.set('suit', id);
   document.querySelectorAll('#tray .chip[data-id]').forEach((c) => c.setAttribute('aria-selected', c.dataset.id === id));
-  $('ncFig').textContent = `Fig. ${String(m.n).padStart(2, '0')}`;
-  $('ncRole').textContent = `${m.era} · ${m.role}`;
   $('ncName').textContent = m.name;
   $('ncJp').textContent = `${m.jp} · ${m.kana}`;
   $('ncBlurb').textContent = m.blurb;
@@ -195,21 +188,13 @@ function hintLoop(){
     n++;
     if (n % 4 === 1) $('hint').innerHTML = 'Tap <b>Face guard</b> to put the iron mask on or off';
     else if (n % 4 === 2) $('hint').innerHTML = 'Tap the <b>round button</b> to take a photo';
-    else if (n % 4 === 3) $('hint').innerHTML = 'Tap <b>i</b> to learn what each part of the armour is called';
+    else if (n % 4 === 3) $('hint').innerHTML = 'Tap <b>Armour</b> to take the body armour off or put it back on';
     else setHint();
   }, 6000);
 }
 
 function onFace(has){ overlay('faceGuide', !has && S.phase === 'wear'); }
 
-// Did you know: the suit's own fact first, then one part at a time, then the extras.
-function nextFact(){
-  const m = BY_ID[S.suit];
-  const all = [m.fact, ...PARTS.map((p) => `<b>${p.name} ${p.jp}</b> is ${p.text}`), ...EXTRA_FACTS];
-  const html = all[S.fact % all.length];
-  S.fact++;
-  toast(`<span class="cap">Did you know?</span><br>${html}`, 6500);
-}
 
 async function takePhoto(){
   if (Stage.isBuilding()) return;
@@ -238,7 +223,6 @@ $('scanSkip').addEventListener('click', () => { stopScan(); overlay('guide', fal
 $('goBtn').addEventListener('click', () => start(false));
 $('previewBtn').addEventListener('click', () => start(true));
 $('closeBtn').addEventListener('click', () => { clearInterval(S.hintTimer); overlay('hud', false); overlay('faceGuide', false); openScan(); });
-$('factBtn').addEventListener('click', nextFact);
 $('namecard').addEventListener('click', () => { clearTimeout(S.compactT); $('namecard').classList.toggle('compact'); });
 $('shutter').addEventListener('click', takePhoto);
 $('photoBack').addEventListener('click', () => show(null));
