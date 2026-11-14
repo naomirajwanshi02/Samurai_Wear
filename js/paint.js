@@ -221,3 +221,112 @@ export function leatherTexture(P, aniso = 8, seed = 11){
   t.wrapS = t.wrapT = THREE.RepeatWrapping;
   return t;
 }
+
+// ------------------------------------------------------------------ the 1650 gusoku (Met 36.25.41)
+// Black lacquer with silver scrollwork (karakusa) and, on the flaps, a border of gilt studs.
+export function karakusaTexture({ studs = false, aniso = 8, seed = 41 } = {}){
+  const W = 512, H = 512;
+  const [c, g] = canvas(W, H);
+  const r = rng(seed);
+  const gr = g.createLinearGradient(0, 0, W, H);
+  gr.addColorStop(0, '#26221f'); gr.addColorStop(1, '#141210');
+  g.fillStyle = gr; g.fillRect(0, 0, W, H);
+  // speckled lacquer
+  for (let i = 0; i < 900; i++){ g.fillStyle = `rgba(150,140,130,${0.05 + r() * 0.1})`; g.fillRect(r() * W, r() * H, 1.5, 1.5); }
+  // silver scrolls: curling vines with small leaves, drawn as continuous strokes
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  const x0 = studs ? 30 : 0, x1 = studs ? W - 120 : W;
+  for (let k = 0; k < 70; k++){
+    let x = x0 + r() * (x1 - x0), y = r() * H, a = r() * 6.28, w = 1.9;
+    g.strokeStyle = '#d9d6d0'; g.lineWidth = w;
+    g.beginPath(); g.moveTo(x, y);
+    for (let s = 0; s < 46; s++){
+      a += 0.12 + 0.12 * Math.sin(s * 0.3 + k);
+      x += Math.cos(a) * 2.2; y += Math.sin(a) * 2.2;
+      g.lineTo(x, y);
+      if (s % 11 === 5){ g.stroke(); g.fillStyle = '#d9d6d0'; g.beginPath(); g.ellipse(x + Math.cos(a + 1.6) * 4, y + Math.sin(a + 1.6) * 4, 3.6, 1.5, a + 1.6, 0, 7); g.fill(); g.beginPath(); g.moveTo(x, y); }
+    }
+    g.stroke();
+  }
+  if (studs){
+    // two columns of gilt studs down the outer edge, and a row along the top
+    for (let col = 0; col < 2; col++) for (let y = 18; y < H; y += 26){
+      const x = W - 70 + col * 34;
+      const sg = g.createRadialGradient(x - 3, y - 3, 1, x, y, 11);
+      sg.addColorStop(0, '#ffd89a'); sg.addColorStop(0.5, '#e3973a'); sg.addColorStop(1, '#7a4614');
+      g.fillStyle = sg; g.beginPath(); g.arc(x, y, 10, 0, 7); g.fill();
+    }
+  }
+  const t = tex(c, { aniso });
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+
+// The breastplate's centre panel: brown, with a silver dragon coiling through clouds.
+export function dragonTexture(aniso = 8){
+  const W = 512, H = 640;
+  const [c, g] = canvas(W, H);
+  const r = rng(53);
+  g.fillStyle = '#5a3324'; g.fillRect(0, 0, W, H);
+  for (let i = 0; i < 1500; i++){ g.fillStyle = `rgba(30,14,8,${0.05 + r() * 0.12})`; g.fillRect(r() * W, r() * H, 2, 2); }
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  // clouds: clusters of curling puffs
+  const cloud = (cx, cy, s) => {
+    for (let k = 0; k < 5; k++){
+      const x = cx + (k - 2) * 22 * s, y = cy + Math.sin(k * 1.7) * 10 * s;
+      g.fillStyle = '#b9b0ab'; g.beginPath(); g.arc(x, y, 18 * s, 0, 7); g.fill();
+      g.strokeStyle = '#7d706a'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 10 * s, 0.4, 5.2); g.stroke();
+    }
+    g.strokeStyle = '#e7e1dc'; g.lineWidth = 2;
+    for (let k = 0; k < 5; k++){ const x = cx + (k - 2) * 22 * s; g.beginPath(); g.arc(x - 4 * s, cy - 5 * s, 6 * s, 3.4, 5.6); g.stroke(); }
+  };
+  [[120, 90, 1.1], [380, 110, 1], [90, 330, 0.9], [420, 360, 1.1], [250, 560, 1.2], [140, 520, 0.8], [380, 560, 0.9]].forEach(([x, y, s]) => cloud(x, y, s));
+  // the dragon: a serpentine scaled body in an S, with head, mane and claws
+  const path = [];
+  for (let i = 0; i <= 120; i++){ const t = i / 120; path.push([256 + 150 * Math.sin(t * 6.6 + 0.6) * (1 - 0.3 * t), 70 + 480 * t + 40 * Math.sin(t * 9)]); }
+  for (const [lw, col] of [[34, '#6c5d57'], [28, '#c9c1bc'], [16, '#a99e98']]){
+    g.strokeStyle = col; g.lineWidth = lw; g.beginPath(); path.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.stroke();
+  }
+  // scales along the body
+  g.strokeStyle = '#6c5d57'; g.lineWidth = 1.6;
+  for (let i = 2; i < path.length - 2; i += 2){ const [x, y] = path[i]; g.beginPath(); g.arc(x, y, 7, 0.3, 2.8); g.stroke(); }
+  // the spine flame
+  g.strokeStyle = '#e7e1dc'; g.lineWidth = 2.4;
+  for (let i = 4; i < path.length - 4; i += 3){ const [x, y] = path[i], [x2, y2] = path[i + 1]; const nx = -(y2 - y), ny = x2 - x, l = Math.hypot(nx, ny) || 1; g.beginPath(); g.moveTo(x + nx / l * 14, y + ny / l * 14); g.lineTo(x + nx / l * 24, y + ny / l * 24 - 4); g.stroke(); }
+  // head at the top of the S
+  const [hx, hy] = path[0];
+  g.fillStyle = '#c9c1bc'; g.strokeStyle = '#6c5d57'; g.lineWidth = 3;
+  g.beginPath(); g.ellipse(hx - 10, hy - 6, 34, 22, -0.3, 0, 7); g.fill(); g.stroke();
+  g.fillStyle = '#3a2a22'; g.beginPath(); g.arc(hx - 18, hy - 12, 4.5, 0, 7); g.fill();
+  g.strokeStyle = '#e7e1dc'; g.lineWidth = 2.5;
+  for (let k = 0; k < 6; k++){ g.beginPath(); g.moveTo(hx + 10, hy - 14 + k * 5); g.bezierCurveTo(hx + 40, hy - 30 + k * 6, hx + 50, hy + k * 8, hx + 70, hy - 10 + k * 9); g.stroke(); }
+  g.beginPath(); g.moveTo(hx - 40, hy); g.bezierCurveTo(hx - 70, hy + 10, hx - 80, hy - 30, hx - 100, hy - 20); g.stroke(); // whisker
+  // claws
+  for (const i of [30, 60, 92]){ const [x, y] = path[i]; g.strokeStyle = '#c9c1bc'; g.lineWidth = 7; g.beginPath(); g.moveTo(x, y); g.lineTo(x + 30, y + 18); g.stroke(); g.lineWidth = 3; for (let k = -1; k <= 1; k++){ g.beginPath(); g.moveTo(x + 30, y + 18); g.lineTo(x + 40 + k * 4, y + 26 + k * 6); g.stroke(); } }
+  // a fine silver frame
+  g.strokeStyle = '#cfcac6'; g.lineWidth = 6; g.strokeRect(8, 8, W - 16, H - 16);
+  return tex(c, { aniso });
+}
+
+// Haidate (thigh guard): small black lacquered scales laced in grey, with an olive kneecap
+// plate of tortoise-shell hexagons.
+export function haidateTexture(aniso = 8){
+  const W = 512, H = 512;
+  const [c, g] = canvas(W, H);
+  g.fillStyle = '#1a1817'; g.fillRect(0, 0, W, H);
+  for (let y = 6; y < H; y += 22) for (let x = (y / 22) % 2 ? 0 : 7; x < W; x += 14){
+    g.fillStyle = '#2e2b29'; g.fillRect(x + 1, y, 11, 16);
+    g.fillStyle = '#8a827c'; g.fillRect(x + 5, y + 2, 3, 12);
+  }
+  const knee = (cx, cy) => {
+    g.fillStyle = '#4a4a2c'; g.beginPath(); g.ellipse(cx, cy, 70, 50, 0, 0, 7); g.fill();
+    g.strokeStyle = '#2a2a18'; g.lineWidth = 4;
+    for (let y = -40; y <= 40; y += 22) for (let x = -60 + (y / 22 % 2 ? 11 : 0); x <= 60; x += 24){
+      if ((x / 70) ** 2 + (y / 50) ** 2 > 0.8) continue;
+      g.beginPath(); for (let k = 0; k <= 6; k++){ const a = k * Math.PI / 3; const px = cx + x + Math.cos(a) * 10, py = cy + y + Math.sin(a) * 10; k ? g.lineTo(px, py) : g.moveTo(px, py); } g.stroke();
+    }
+    g.strokeStyle = '#a99a5a'; g.lineWidth = 3; g.beginPath(); g.ellipse(cx, cy, 70, 50, 0, 0, 7); g.stroke();
+  };
+  knee(W / 2, H * 0.72);
+  return tex(c, { aniso });
+}

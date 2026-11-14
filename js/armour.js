@@ -1,44 +1,40 @@
-// The Ō-yoroi (大鎧), the "great armour" of the Heian and Kamakura periods, built in code in
-// MindAR's canonical face space (centimetres; +z toward the viewer, +x the wearer's left,
-// eyes at y ≈ 2.7, chin at y ≈ −9.4, nose tip at z ≈ 7.6).
+// The armour (gusoku 具足), about 1650, in the Metropolitan Museum of Art, New York
+// (accession 36.25.41a–q, Bequest of George C. Stone, 1935; helmet signed by Saotome Ietada).
+// Built in code to the reference drawing of that armour, in MindAR's canonical face space
+// (centimetres; +z toward the viewer, +x the wearer's left, eyes at y ≈ 2.7, chin at y ≈ −9.4).
 //
-// Checked against period descriptions (see SOURCES.md), chiefly the National Treasure
-// red-laced ō-yoroi of Kasuga Taisha (赤絲威鎧, late Kamakura):
-//
-//   head  — hoshi kabuto (星兜): a black-lacquered iron bowl of riveted plates with large raised
-//           rivets (厳星), gilt arrow-tipped strips (篠垂) in six directions (六方白), the gilt
-//           seat round the open crown (天辺の座); a visor (眉庇) covered in stencilled leather,
-//           with the horn stand (鍬形台) on it bearing a lion's face (獅噛) and the two tall gilt
-//           horns (鍬形); a five-lame neck guard hanging down in the cedar shape (杉形錣), red-laced,
-//           with cross-knots (菱縫) on the bottom lame, its upper four lames turned back at the
-//           front as the big flaps (吹返), faced with stencilled leather; the chin cord (忍緒).
-//   face  — happuri (半首): the face guard of the period, an iron plate over the forehead and
-//           both cheeks, leaving the eyes, nose and mouth open.
-//   torso — the cuirass (胴) with its leather-covered breastplate (胸板) and bowstring panel
-//           (弦走韋); the laced right chest guard (栴檀板, three lames) and the solid left chest
-//           guard (鳩尾板); shoulder straps with their upright guards (障子の板); the large
-//           shoulder guards (大袖, seven lames); and the four-panel box skirt (草摺, five lames).
-//
-// Later features are deliberately left out: the umbrella neck guard (笠錣, Muromachi) and the
-// menpō mask with nose and moustache (from the mid-1400s).
+//   head  — black lacquered kabuto bowl with its gilt crown ring; a pale-gold crescent crest
+//           (kuwagata) with flared fish-tail tips, a dark-brown crest stand behind it and, in the
+//           middle, a gilt ring above a gilt bell-shaped ornament; a black visor and big black side
+//           flaps (fukigaeshi) with silver scrollwork and a border of gilt studs; a wide umbrella-
+//           shaped neck guard (kasa-jikoro) of black lames with rows of orange studs, the lowest
+//           row red-brown; peach-orange silk cords tied under the chin.
+//   face  — the menpō: dark iron half mask with a big white horsehair moustache, gilt teeth,
+//           silver-lined wrinkles and a round chin, over a gold-laced throat guard (yodare-kake).
+//   torso — the cuirass (dō) laced in gold rows with stud rows, its brown centre panel with a
+//           silver dragon in clouds, two gold tassels hanging from gilt fittings, an orange cord
+//           belt knotted at the front, gold-laced shoulder pieces and shoulder guards (sode),
+//           the gold-laced skirt (kusazuri) and the dark scale thigh guard (haidate) with olive
+//           knee plates.
+// The arm and leg armour in the drawing (kote, suneate) is left out: AR tracks the head, not the limbs.
 
 import * as THREE from 'three';
-import { faceShell } from './face-fit.js';
-import { lamesTexture, grainTexture, egawaTexture } from './paint.js';
+import { faceZ, faceShell } from './face-fit.js';
+import { lamesTexture, grainTexture, karakusaTexture, dragonTexture, haidateTexture, canvas, tex, rng } from './paint.js';
 
 const TAU = Math.PI * 2;
 const smooth = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 
-// aka-ito odoshi: black-lacquered scales laced with red silk
-const LACE = {
-  plate: '#1a0e0a', plateHi: '#3a1a12', plateLo: '#0a0403', gap: '#070403', cord: '#b8341f', cordLo: '#7c1d10', cordHi: '#e8724a',
-  dot: '#d8b45a', knot: '#f1e7d2', knot2: '#c2321f', leather: '#e4d9bf', leatherInk: '#2c3f6b', leatherRed: '#a8392b', leatherRim: '#7a2a1b',
-  cloud: '#9a7b4a', cloudLo: '#0b0604',
-};
+// palettes for the laced lames
+const base = { plate: '#1b1918', plateHi: '#3a3532', plateLo: '#090808', gap: '#060505', knot: '#f1e7d2', knot2: '#c2321f',
+  leather: '#e4d9bf', leatherInk: '#2c3f6b', leatherRed: '#a8392b', leatherRim: '#7a2a1b', cloud: '#9a7b4a', cloudLo: '#0b0604' };
+const GOLD = { ...base, cord: '#d9b45c', cordLo: '#9c7a33', cordHi: '#f6dd95', dot: '#e3973a' };
+const SHIKORO_PAL = { ...base, cord: '#3b2a1f', cordLo: '#22170f', cordHi: '#5a4433', dot: '#e3973a' };
+const SHIKORO_LAST = { ...SHIKORO_PAL, plate: '#5a2a1c', plateHi: '#7a3a26', plateLo: '#2a120a' };
+const YELLOW = { ...base, cord: '#d6b25e', cordLo: '#a8853c', cordHi: '#f0d68e', dot: '#e3973a', plate: '#141212' };
 
 // ------------------------------------------------------------------ geometry helpers
-// A grid surface f(u, v) → [x, y, z], u and v in 0–1, normals outward when ∂u × ∂v points out.
 function surface(nu, nv, f){
   const pos = new Float32Array((nu + 1) * (nv + 1) * 3), uv = new Float32Array((nu + 1) * (nv + 1) * 2), idx = [];
   for (let j = 0, k = 0; j <= nv; j++) for (let i = 0; i <= nu; i++, k++){
@@ -68,199 +64,165 @@ function mirrorX(geo){
   }
   return g;
 }
-// Adds a mesh and its mirror image across the face's centre line.
-function both(group, geo, mat){
-  group.add(new THREE.Mesh(geo, mat), new THREE.Mesh(mirrorX(geo), mat));
-}
+function both(group, geo, mat){ group.add(new THREE.Mesh(geo, mat), new THREE.Mesh(mirrorX(geo), mat)); }
 function tubeGeo(points, radius, { closed = false, seg = 120, radial = 8 } = {}){
   return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points, closed, 'centripetal'), seg, radius, radial, closed);
 }
 function tube(points, radius, mat, opts){ return new THREE.Mesh(tubeGeo(points, radius, opts), mat); }
-// A gilt rim (fukurin) along one edge of a surface, and its mirror.
 function edgeOf(f, which, n = 60){
   const pts = [];
   for (let i = 0; i <= n; i++){ const s = i / n; pts.push(V(...(which === 'top' ? f(s, 1) : which === 'bottom' ? f(s, 0) : which === 'left' ? f(0, s) : f(1, s)))); }
   return pts;
 }
+// a row of small domed studs along a path of points
+function studs(points, r, mat){
+  const sph = new THREE.SphereGeometry(1, 10, 6);
+  const inst = new THREE.InstancedMesh(sph, mat, points.length);
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(r, r, r * 0.7);
+  points.forEach((p, i) => { m4.compose(p, q, s); inst.setMatrixAt(i, m4); });
+  return inst;
+}
 
 // ------------------------------------------------------------------ materials
 function M(o){ return new THREE.MeshPhysicalMaterial(o); }
 function materials(aniso){
-  const gold = M({ color: '#c0913a', metalness: 1, roughness: 0.32, clearcoat: 0.2 });
-  const grain = grainTexture({ base: '#1a1310', spot: '#3a2418', streak: '#050302' }, aniso); grain.repeat.set(3, 2);
-  const lacquer = M({ color: '#ffffff', map: grain, metalness: 0.2, roughness: 0.42, clearcoat: 0.6, clearcoatRoughness: 0.32 });
+  const gold = M({ color: '#d9b45c', metalness: 1, roughness: 0.3, clearcoat: 0.2 });
+  const paleGold = M({ color: '#ecd393', metalness: 0.85, roughness: 0.35, clearcoat: 0.3, side: THREE.DoubleSide });
+  const stud = M({ color: '#e3973a', metalness: 0.9, roughness: 0.3 });
+  const grain = grainTexture({ base: '#1b1918', spot: '#34302c', streak: '#050404' }, aniso); grain.repeat.set(3, 2);
+  const lacquer = M({ color: '#ffffff', map: grain, metalness: 0.2, roughness: 0.4, clearcoat: 0.7, clearcoatRoughness: 0.28 });
   const lacquerDS = lacquer.clone(); lacquerDS.side = THREE.DoubleSide;
-  const rivet = M({ color: '#241a15', metalness: 0.55, roughness: 0.32, clearcoat: 0.6 });
-  const egawa = egawaTexture(aniso);
-  const leather = (rx, ry) => { const t = egawa.clone(); t.needsUpdate = true; t.repeat.set(rx, ry); return M({ map: t, color: '#cdbd9c', roughness: 0.8, clearcoat: 0.05, envMapIntensity: 0.6, side: THREE.DoubleSide }); };
-  const under = M({ color: '#140c08', roughness: 0.9, envMapIntensity: 0.15 });
-  const cord = M({ color: '#9b2a1c', roughness: 0.8 });
-  return { gold, lacquer, lacquerDS, rivet, leather, under, cord };
+  const brown = M({ color: '#5a3520', roughness: 0.7, clearcoat: 0.15, clearcoatRoughness: 0.5, envMapIntensity: 0.4, side: THREE.DoubleSide });
+  const bellGold = M({ color: '#d9a640', metalness: 0.9, roughness: 0.38, envMapIntensity: 0.7 });
+  const karakusa = (rx, ry, studsOn = false) => { const t = karakusaTexture({ studs: studsOn, aniso }); t.repeat.set(rx, ry); return M({ map: t, roughness: 0.38, metalness: 0.15, clearcoat: 0.7, clearcoatRoughness: 0.25, side: THREE.DoubleSide }); };
+  const under = M({ color: '#100d0b', roughness: 0.9, envMapIntensity: 0.15 });
+  const cord = M({ color: '#f0a06a', roughness: 0.75, sheen: 0.6, sheenColor: new THREE.Color('#ffd2b0') });
+  const hair = M({ color: '#f1ece2', roughness: 0.62, sheen: 0.8, sheenColor: new THREE.Color('#ffffff') });
+  return { gold, paleGold, stud, lacquer, lacquerDS, brown, bellGold, karakusa, under, cord, hair };
 }
 function lacingMat(spec, aniso){
-  const { map, bump } = lamesTexture({ seed: 5, style: 'kebiki', pal: LACE, ...spec }, aniso);
-  return M({ map, bumpMap: bump, bumpScale: 2.2, roughness: 0.55, metalness: 0.05, clearcoat: 0.45, clearcoatRoughness: 0.35, side: THREE.DoubleSide });
+  const { map, bump } = lamesTexture({ seed: 5, style: 'kebiki', pal: GOLD, ...spec }, aniso);
+  return M({ map, bumpMap: bump, bumpScale: 2.0, roughness: 0.5, metalness: 0.1, clearcoat: 0.5, clearcoatRoughness: 0.3, side: THREE.DoubleSide });
 }
 
-// ------------------------------------------------------------------ the helmet bowl (hoshi-bachi)
-// An ellipsoid dome over the head, sized for a head with hair. Its rim sits on the brows at the
-// front and drops to the nape at the back, so it covers the hair all round like a head-wear lens.
+// ------------------------------------------------------------------ the helmet bowl
+// Sized for a head with hair; the rim sits on the brows at the front and drops to the nape.
 const BOWL = { cy: 3.3, cz: -4.3, ax: 10.1, ay: 10.3, az: 11.3, yf: 5.8, yb: 0.8 };
 export const rimY = (t) => BOWL.yb + (BOWL.yf - BOWL.yb) * (1 + Math.cos(t)) / 2;
 function rimPhi(t){ return Math.acos((rimY(t) - BOWL.cy) / BOWL.ay); }
 function bowlPoint(t, s, k = 1){
-  // t: angle round from the front (+z) toward +x; s: 0 at the crown → 1 at the rim
   const ph = s * rimPhi(t);
   return [k * BOWL.ax * Math.sin(ph) * Math.sin(t), BOWL.cy + BOWL.ay * Math.cos(ph), BOWL.cz + k * BOWL.az * Math.sin(ph) * Math.cos(t)];
 }
-const PLATES = 16;
-const SHINODARE = [0, 0.42, -0.42, Math.PI, Math.PI + 0.42, Math.PI - 0.42]; // 六方白: three in front, three behind
+const zFront = (y) => { const c = (y - BOWL.cy) / BOWL.ay; return BOWL.cz + BOWL.az * Math.sqrt(Math.max(0, 1 - c * c)); };
 
 function bowl(mat){
   const g = new THREE.Group(); g.name = 'hachi';
-  // sixteen riveted plates, each standing a little proud of the next
-  const step = (t, s) => 1 + 0.016 * (1 - ((t / TAU * PLATES) % 1)) * smooth(0.08, 0.3, s);
-  g.add(new THREE.Mesh(surface(PLATES * 10, 48, (u, v) => { const t = u * TAU, s = 1 - v; return bowlPoint(t, s, step(t, s)); }), mat.lacquer));
-  // 厳星: a row of big raised rivets down every plate, growing toward the rim; none under the strips
-  const sph = new THREE.SphereGeometry(1, 14, 8, 0, TAU, 0, Math.PI / 2);
-  sph.rotateX(Math.PI / 2); // dome facing +z, turned to the surface below
-  const inst = new THREE.InstancedMesh(sph, mat.rivet, PLATES * 8);
-  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), p = new THREE.Vector3(), n = new THREE.Vector3();
-  const zAxis = V(0, 0, 1);
-  let c = 0;
-  for (let i = 0; i < PLATES; i++){
-    const t = (i + 0.08) / PLATES * TAU;
-    if (SHINODARE.some((a) => Math.abs(Math.atan2(Math.sin(t - a), Math.cos(t - a))) < 0.12)) continue;
-    for (let k = 0; k < 8; k++){
-      const s = 0.3 + k * 0.085;
-      p.fromArray(bowlPoint(t, s, 1.016));
-      n.fromArray(bowlPoint(t, s, 1.1)).sub(p).normalize();
-      q.setFromUnitVectors(zAxis, n);
-      const r = 0.24 + 0.2 * s;
-      m4.compose(p, q, sc.set(r, r, r * 0.9));
-      inst.setMatrixAt(c++, m4);
-    }
-  }
-  inst.count = c;
-  g.add(inst);
-  // 篠垂: gilt strips running down from the crown, each ending in a leaf-shaped arrow tip
-  for (const a of SHINODARE){
-    const tipS = 0.72, half = (s) => {
-      const w = s < tipS - 0.16 ? 0.38 : s < tipS - 0.07 ? 0.38 + 0.4 * smooth(tipS - 0.16, tipS - 0.09, s) : 0.78 * (1 - smooth(tipS - 0.07, tipS, s));
-      return w;
-    };
-    const f = (u, v) => { const s = 0.07 + v * (tipS - 0.07), r = Math.max(1.2, BOWL.ax * Math.sin(s * rimPhi(a))); return bowlPoint(a + (u - 0.5) * 2 * half(s) / r, s, 1.024); };
-    g.add(new THREE.Mesh(surface(6, 40, (u, v) => f(u, 1 - v)), mat.gold));
-    for (const s of [0.2, 0.38, tipS - 0.1]){ const r = new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 6), mat.gold); r.position.fromArray(bowlPoint(a, s, 1.035)); g.add(r); }
-  }
-  // the band round the rim (koshimaki), black with a gilt lower edge
+  // a ridged bowl (suji-bachi) of 62 plates, as the Saotome school made them, each standing a little proud of the next
+  const N = 62;
+  const step = (t, s) => 1 + 0.008 * (1 - ((t / TAU * N) % 1)) * smooth(0.08, 0.3, s);
+  g.add(new THREE.Mesh(surface(N * 6, 48, (u, v) => { const t = u * TAU, s = 1 - v; return bowlPoint(t, s, step(t, s)); }), mat.lacquer));
+  // the band round the rim, with a gilt edge
   g.add(new THREE.Mesh(surface(160, 3, (u, v) => bowlPoint(u * TAU, 1 - 0.08 * v, 1.03)), mat.lacquer));
-  g.add(tube(Array.from({ length: 97 }, (_, i) => V(...bowlPoint(i / 96 * TAU, 0.995, 1.04))), 0.1, mat.gold, { closed: true, seg: 200 }));
-  // 天辺の座: the gilt chrysanthemum seat round the open crown (for the topknot)
+  g.add(tube(Array.from({ length: 97 }, (_, i) => V(...bowlPoint(i / 96 * TAU, 0.995, 1.04))), 0.09, mat.gold, { closed: true, seg: 200 }));
+  // the gilt ring round the crown hole (tehen)
   const top = BOWL.cy + BOWL.ay;
-  const petals = (R, h, y) => {
-    const shape = new THREE.Shape();
-    for (let i = 0; i <= 64; i++){ const a = i / 64 * TAU, rr = R * (1 + 0.08 * Math.cos(16 * a)); (i ? shape.lineTo : shape.moveTo).call(shape, Math.cos(a) * rr, Math.sin(a) * rr); }
-    shape.holes.push(new THREE.Path().absarc(0, 0, 1.05, 0, TAU, true));
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.06, bevelSegments: 1, curveSegments: 24 });
-    geo.rotateX(-Math.PI / 2); geo.translate(0, y, BOWL.cz);
-    return new THREE.Mesh(geo, mat.gold);
-  };
-  g.add(petals(2.7, 0.12, top - 0.55), petals(2.0, 0.14, top - 0.38), petals(1.5, 0.14, top - 0.22));
-  const hole = new THREE.Mesh(new THREE.CircleGeometry(1.05, 24), M({ color: '#050302', roughness: 1 }));
-  hole.rotation.x = -Math.PI / 2; hole.position.set(0, top - 0.05, BOWL.cz);
-  g.add(hole);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.28, 10, 36), mat.gold);
+  ring.rotation.x = Math.PI / 2; ring.position.set(0, top - 0.1, BOWL.cz);
+  const hole = new THREE.Mesh(new THREE.CircleGeometry(0.9, 24), M({ color: '#050302', roughness: 1 }));
+  hole.rotation.x = -Math.PI / 2; hole.position.set(0, top - 0.04, BOWL.cz);
+  g.add(ring, hole);
   return g;
 }
 
-// ------------------------------------------------------------------ visor, horn stand, horns
-// The visor (眉庇) juts forward from the front of the rim; its top is faced with stencilled
-// leather, its underside is dark, and its edge is gilt.
-const VISOR_A = 1.3;
+// ------------------------------------------------------------------ visor and crest
+const VISOR_A = 1.25;
 function visorAt(u, v){
   const t = (u - 0.5) * 2 * VISOR_A;
   const p = bowlPoint(t, 1, 1.02);
-  const L = 3.1 * Math.cos(t * 0.95) ** 0.7 * smooth(VISOR_A, VISOR_A * 0.55, Math.abs(t));
-  return [p[0] + Math.sin(t) * L * v, p[1] - 1.3 * L / 3.1 * v + 0.35 * v * v, p[2] + Math.cos(t) * L * v];
+  const L = 2.6 * Math.cos(t * 0.95) ** 0.7 * smooth(VISOR_A, VISOR_A * 0.55, Math.abs(t));
+  return [p[0] + Math.sin(t) * L * v, p[1] - 0.9 * L / 2.6 * v + 0.25 * v * v, p[2] + Math.cos(t) * L * v];
 }
 function visor(mat){
   const g = new THREE.Group(); g.name = 'mabizashi';
   const geo = surface(80, 8, visorAt); // faces down
-  const top = mat.leather(3.2, 0.5); top.side = THREE.BackSide;
+  const top = mat.karakusa(3, 0.5); top.side = THREE.BackSide;
   g.add(new THREE.Mesh(geo, top), new THREE.Mesh(geo, mat.under));
-  g.add(tube(edgeOf(visorAt, 'top', 80), 0.14, mat.gold, { seg: 160 }));
+  g.add(tube(edgeOf(visorAt, 'top', 80), 0.13, mat.gold, { seg: 160 }));
   return g;
 }
 
-// The horn stand (鍬形台) sits on the visor; on it a gilt lion's face (獅噛) with jewelled eyes;
-// from its two sides rise the gilt horns (鍬形), engraved along their length.
-function horns(mat){
+// The crest: a dark-brown stand rising from the brow, a wide pale-gold crescent (kuwagata) across
+// the front with fish-tail tips, and in the middle a gilt ring above a gilt bell-shaped ornament.
+function crest(mat){
   const g = new THREE.Group(); g.name = 'kuwagata';
-  const base = visorAt(0.5, 0.35); // on the visor, just in front of the bowl
-  const tilt = -0.32;
-  const place = (geo, x, y, z = 0) => { geo.rotateX(tilt); geo.translate(base[0] + x, base[1] + y, base[2] + z); return geo; };
-  const dai = new THREE.Shape();
-  dai.moveTo(-3.1, 0); dai.lineTo(3.1, 0); dai.quadraticCurveTo(3.3, 1.8, 2.3, 2.6); dai.quadraticCurveTo(0, 3.9, -2.3, 2.6); dai.quadraticCurveTo(-3.3, 1.8, -3.1, 0);
-  g.add(new THREE.Mesh(place(new THREE.ExtrudeGeometry(dai, { depth: 0.35, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.1, bevelSegments: 2 }), 0, 0.1, -0.2), mat.gold));
-  // the lion's face: a domed boss with brows, eyes and a grin
-  const boss = new THREE.SphereGeometry(1, 24, 16); boss.scale(1.35, 1.1, 0.55);
-  g.add(new THREE.Mesh(place(boss, 0, 1.55, 0.35), mat.gold));
-  for (const s of [-1, 1]){
-    const eye = new THREE.SphereGeometry(0.26, 12, 8);
-    g.add(new THREE.Mesh(place(eye, s * 0.5, 1.85, 0.85), M({ color: '#7a1408', roughness: 0.15, clearcoat: 1 })));
-    const brow = new THREE.TorusGeometry(0.42, 0.1, 6, 12, Math.PI * 0.8); brow.rotateZ(Math.PI * 0.1 + (s > 0 ? 0 : Math.PI * 0.0));
-    g.add(new THREE.Mesh(place(brow, s * 0.5, 1.95, 0.8), mat.gold));
-  }
-  const grin = new THREE.TorusGeometry(0.6, 0.11, 6, 16, Math.PI); grin.rotateZ(Math.PI);
-  g.add(new THREE.Mesh(place(grin, 0, 1.35, 0.85), mat.gold));
-  // one horn: a broad gilt blade sweeping up and out to a rounded tip
-  const N = 40, left = [], right = [];
-  for (let i = 0; i <= N; i++){
-    const t = i / N;
-    const cx = 9.5 * t ** 1.6, cy = 16 * t;
-    const dx = 9.5 * 1.6 * t ** 0.6 + 1e-3, dy = 16, l = Math.hypot(dx, dy);
-    const w = 0.55 + 1.6 * t ** 1.1 + 0.3 * Math.sin(Math.PI * t);
-    left.push([cx - dy / l * w, cy + dx / l * w]); right.push([cx + dy / l * w, cy - dx / l * w]);
-  }
-  const bl = new THREE.Shape();
-  bl.moveTo(...left[0]);
-  for (const qq of left) bl.lineTo(...qq);
-  const tl = left[N], tr = right[N];
-  bl.bezierCurveTo(tl[0] + 0.4, tl[1] + 2.4, tr[0] + 1.8, tr[1] + 1.6, tr[0], tr[1]);
-  for (let i = N; i >= 0; i--) bl.lineTo(...right[i]);
-  bl.lineTo(...left[0]);
-  const hg = new THREE.ExtrudeGeometry(bl, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.07, bevelSize: 0.07, bevelSegments: 2, curveSegments: 12 });
-  hg.rotateY(-0.12);
-  both(g, place(hg, 2.2, 1.0, -0.1), mat.gold);
-  // the engraved line along each blade (the "feather" engraving on the Kasuga horns)
-  const groove = [];
-  for (let i = 2; i <= N - 2; i++){ const t = i / N; groove.push(V(9.5 * t ** 1.6, 16 * t, 0.32)); }
-  const gg = tubeGeo(groove, 0.07, { seg: 60, radial: 5 }); gg.rotateY(-0.12);
-  both(g, place(gg, 2.2, 1.0, -0.1), M({ color: '#7a5520', metalness: 1, roughness: 0.5 }));
+  const y0 = 6.6, z0 = zFront(y0) + 1.0, tilt = -0.22;
+  const place = (geo, dz = 0) => { geo.rotateX(tilt); geo.translate(0, y0, z0 + dz); return geo; };
+  // the stand: a tall rounded arch of brown lacquer behind everything
+  const st = new THREE.Shape();
+  st.moveTo(-3.0, 0.6); st.lineTo(-3.0, 5.2); st.quadraticCurveTo(-3.0, 8.4, 0, 8.6); st.quadraticCurveTo(3.0, 8.4, 3.0, 5.2); st.lineTo(3.0, 0.6); st.lineTo(-3.0, 0.6);
+  g.add(new THREE.Mesh(place(new THREE.ExtrudeGeometry(st, { depth: 0.35, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.12, bevelSegments: 2 }), -0.4), mat.brown));
+  // the crescent: outer and inner arcs from tip to tip, the tips flaring into a fish tail
+  const cr = new THREE.Shape();
+  const outer = (t) => [10.6 * Math.sin(t), 11.5 - 11.5 * Math.cos(t)];
+  const inner = (t) => [8.1 * Math.sin(t), 11.5 - 9.6 * Math.cos(t) - 0.4];
+  const T = 1.2, n = 40;
+  cr.moveTo(...outer(-T));
+  for (let i = 1; i <= n; i++) cr.lineTo(...outer(-T + 2 * T * i / n));
+  // right tip: flare up and out, with a notch
+  const [ox, oy] = outer(T), [ix, iy] = inner(T);
+  cr.quadraticCurveTo(ox + 3.0, oy + 0.4, ox + 3.8, oy + 2.6);
+  cr.quadraticCurveTo(ox + 0.6, oy + 1.4, ox - 0.2, oy + 2.1);
+  cr.quadraticCurveTo(ix + 0.4, iy + 2.2, ix - 0.6, iy + 1.6);
+  for (let i = n; i >= 0; i--) cr.lineTo(...inner(-T + 2 * T * i / n));
+  const [lix, liy] = inner(-T), [lox, loy] = outer(-T);
+  cr.lineTo(lix + 0.6, liy + 1.6);
+  cr.quadraticCurveTo(lix - 0.4, liy + 2.2, lox + 0.2, loy + 2.1);
+  cr.quadraticCurveTo(lox - 0.6, loy + 1.4, lox - 3.8, loy + 2.6);
+  cr.quadraticCurveTo(lox - 3.0, loy + 0.4, lox, loy);
+  const cg = new THREE.ExtrudeGeometry(cr, { depth: 0.22, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.06, bevelSegments: 2, curveSegments: 12 });
+  // bend it round the bowl a little so the tips sit back
+  const p = cg.attributes.position;
+  for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) - 0.035 * p.getX(i) ** 2);
+  cg.computeVertexNormals();
+  g.add(new THREE.Mesh(place(cg, 0.15), mat.paleGold));
+  // three gilt rivets on the crescent
+  for (const x of [-2.6, 0, 2.6]){ const r = new THREE.SphereGeometry(0.3, 12, 8); r.translate(x, 0.9 + 0.02 * x * x, 0.5 - 0.035 * x * x); g.add(new THREE.Mesh(place(r, 0.15), mat.gold)); }
+  // the bell-shaped gilt ornament with incised bands, and the ring above it
+  const bell = new THREE.Shape();
+  bell.moveTo(-0.55, 6.4); bell.lineTo(0.55, 6.4); bell.quadraticCurveTo(0.7, 5.2, 1.4, 4.4); bell.quadraticCurveTo(2.0, 3.2, 1.9, 2.0);
+  bell.lineTo(1.2, 1.7); bell.lineTo(1.2, 1.2); bell.lineTo(-1.2, 1.2); bell.lineTo(-1.2, 1.7); bell.lineTo(-1.9, 2.0);
+  bell.quadraticCurveTo(-2.0, 3.2, -1.4, 4.4); bell.quadraticCurveTo(-0.7, 5.2, -0.55, 6.4);
+  g.add(new THREE.Mesh(place(new THREE.ExtrudeGeometry(bell, { depth: 0.45, bevelEnabled: true, bevelThickness: 0.15, bevelSize: 0.15, bevelSegments: 3, curveSegments: 12 }), 0.35), mat.bellGold));
+  const inc = M({ color: '#8a6524', metalness: 1, roughness: 0.5 });
+  for (const [y, w] of [[2.4, 1.6], [3.4, 1.55], [4.5, 1.05]]){ const b = new THREE.BoxGeometry(2 * w, 0.08, 0.1); b.translate(0, y, 1.0); g.add(new THREE.Mesh(place(b, 0.35), inc)); }
+  const ring = new THREE.TorusGeometry(1.35, 0.2, 10, 36); ring.translate(0, 7.9, 0.55);
+  g.add(new THREE.Mesh(place(ring, 0.35), mat.bellGold));
   return g;
 }
 
 // ------------------------------------------------------------------ neck guard and flaps
-// 杉形錣: five red-laced lames hanging steeply from the rim like a cedar's outline, not flaring
-// flat. Each upper lame laps over the one below. The bottom lame carries the cross-knots.
-const SHIKORO = { lames: 5, r0: 10.9, r1: 14.6, depth: 12.6, ez: 1.06, a0: 0.9 };
+// 笠錣: a wide umbrella-shaped neck guard of five black lames with rows of orange studs, the
+// lowest lame red-brown, hung from just under the rim all the way round.
+const SHIKORO = { lames: 5, r0: 10.9, r1: 21.5, depth: 9.5, ez: 1.05, a0: 0.98 };
 function shikoro(aniso){
   const S = SHIKORO, g = new THREE.Group(); g.name = 'shikoro';
-  const H = S.depth, lh = H / S.lames, over = 0.55;
-  const R = (d) => S.r0 + (S.r1 - S.r0) * (Math.max(0, d) / H) ** 1.5;
-  const cols = Math.round(((S.r0 + S.r1) / 2) * (TAU - 2 * S.a0));
-  const matL = lacingMat({ lames: 1, cols }, aniso), matLast = lacingMat({ lames: 1, cols, knots: true }, aniso);
+  const H = S.depth, lh = H / S.lames, over = 0.5;
+  const R = (d) => S.r0 + (S.r1 - S.r0) * (Math.max(0, d) / H) ** 1.05;
+  const cols = Math.round(((S.r0 + S.r1) / 2) * (TAU - 2 * S.a0) / 2.6);
+  const mk = (pal) => { const { map, bump } = lamesTexture({ seed: 9, style: 'kebiki', pal, lames: 1, cols, plateFrac: 0.62, dots: true }, aniso); return M({ map, bumpMap: bump, bumpScale: 1.6, roughness: 0.4, clearcoat: 0.7, clearcoatRoughness: 0.25, side: THREE.DoubleSide }); };
+  const matL = mk(SHIKORO_PAL), matLast = mk(SHIKORO_LAST);
   const lames = [];
   for (let L = 0; L < S.lames; L++){
     const dT = L * lh - (L ? over : 0) - 0.5, dB = (L + 1) * lh - 0.5;
     const off = 0.3 * (S.lames - L);
-    const a0 = S.a0 + 0.07 * L;
+    const a0 = S.a0 + 0.08 * L;
     const f = (u, v) => {
       const t = a0 + u * (TAU - 2 * a0), d = dB + (dT - dB) * v, y = rimY(t) - d;
-      const r = R(d) + off + 0.4 * (1 - v);
+      const r = R(d) + off + 0.35 * (1 - v);
       return [r * Math.sin(t), y, BOWL.cz + 0.2 + r * S.ez * Math.cos(t)];
     };
-    const m = new THREE.Mesh(surface(120, 6, f), L === S.lames - 1 ? matLast : matL);
+    const m = new THREE.Mesh(surface(140, 6, f), L === S.lames - 1 ? matLast : matL);
     m.renderOrder = 1;
     g.add(m);
     lames.push(f);
@@ -268,91 +230,168 @@ function shikoro(aniso){
   return { g, lames };
 }
 
-// 吹返: the front ends of the upper four lames turned back outward beside the face. The top
-// one is the big leather-faced flap with a gilt rim and gilt rosettes; the three below show
-// as stepped red-laced ends under it.
-function flaps(mat, aniso, lames){
+// 吹返: the big side flaps, standing up beside the bowl and facing forward: black lacquer with
+// silver scrollwork and a border of gilt studs, edged in gilt.
+function flaps(mat, lames){
   const g = new THREE.Group(); g.name = 'fukigaeshi';
-  const front = lames[0](0, 0.55);
-  const T = SHIKORO.a0 + 1.25;
+  const front = lames[0](0, 0.6);
+  const T = SHIKORO.a0 + 1.2;
   const u = V(Math.sin(T), 0, Math.cos(T)), v = V(0, 1, 0), n = new THREE.Vector3().crossVectors(u, v);
-  const basis = new THREE.Matrix4().makeBasis(u, v, n).setPosition(front[0] + n.x * 0.25, front[1] + 0.6, front[2] + n.z * 0.25);
-  const curl = (x) => -0.035 * x * x;
-  const W = 7.2;
-  const flat = (sh, depth) => {
-    const geo = new THREE.ExtrudeGeometry(sh, { depth, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.06, bevelSegments: 2, curveSegments: 10 });
-    const p = geo.attributes.position, uv = geo.attributes.uv;
-    for (let i = 0; i < p.count; i++){ uv.setXY(i, p.getX(i) / (W + 0.4), (p.getY(i) + 6) / 12); p.setZ(i, p.getZ(i) + curl(p.getX(i))); }
-    geo.applyMatrix4(basis); geo.computeVertexNormals();
-    return geo;
-  };
-  // the leather-faced top flap
+  const basis = new THREE.Matrix4().makeBasis(u, v, n).setPosition(front[0] + n.x * 0.3, front[1] + 0.2, front[2] + n.z * 0.3);
+  const curl = (x) => -0.03 * x * x;
+  const W = 8.2;
   const sh = new THREE.Shape();
-  sh.moveTo(0, -0.6); sh.lineTo(W, -0.9); sh.lineTo(W * 0.97, 3.9);
-  sh.quadraticCurveTo(W * 0.93, 5.4, W * 0.68, 5.3); sh.lineTo(0, 3.1); sh.lineTo(0, -0.6);
-  both(g, flat(sh, 0.35), mat.leather(1.4, 1.4));
+  sh.moveTo(0, -1.4); sh.lineTo(W, -2.2); sh.lineTo(W * 1.02, 6.6);
+  sh.quadraticCurveTo(W * 0.98, 7.8, W * 0.8, 7.8); sh.lineTo(0.6, 7.0); sh.quadraticCurveTo(0, 6.9, 0, 6.2); sh.lineTo(0, -1.4);
+  const geo = new THREE.ExtrudeGeometry(sh, { depth: 0.35, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.06, bevelSegments: 2, curveSegments: 10 });
+  const p = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < p.count; i++){ uv.setXY(i, p.getX(i) / (W + 0.4), (p.getY(i) + 2.4) / 10.4); p.setZ(i, p.getZ(i) + curl(p.getX(i))); }
+  geo.applyMatrix4(basis); geo.computeVertexNormals();
+  both(g, geo, mat.karakusa(1, 1, true));
   const rim = sh.getPoints(24).map((q) => V(q.x, q.y, 0.45 + curl(q.x)).applyMatrix4(basis));
-  both(g, tubeGeo(rim, 0.14, { closed: true, seg: 200 }), mat.gold);
-  for (const [x, y] of [[W * 0.78, 3.8], [W * 0.45, 0.3], [W * 0.84, 0.1]]){
-    const ro = new THREE.CylinderGeometry(0.45, 0.47, 0.22, 16); ro.rotateX(Math.PI / 2); ro.translate(x, y, 0.52 + curl(x)); ro.applyMatrix4(basis);
-    both(g, ro, mat.gold);
-  }
-  // three stepped, red-laced lame ends below it
-  for (let k = 0; k < 3; k++){
-    const w = W * (0.9 - 0.12 * k), y1 = -0.75 - k * 1.55, y0 = y1 - 1.75;
-    const s2 = new THREE.Shape(); s2.moveTo(0, y0 + 0.1 * k); s2.lineTo(w, y0); s2.lineTo(w, y1); s2.lineTo(0, y1); s2.lineTo(0, y0 + 0.1 * k);
-    const geo = flat(s2, 0.25);
-    const p = geo.attributes.position, uv = geo.attributes.uv;
-    // UVs for the lacing: across = u, down the lame = v
-    const inv = basis.clone().invert(), tmp = V(0, 0, 0);
-    for (let i = 0; i < p.count; i++){ tmp.set(p.getX(i), p.getY(i), p.getZ(i)).applyMatrix4(inv); uv.setXY(i, tmp.x / w, (tmp.y - y0) / (y1 - y0)); }
-    both(g, geo, lacingMat({ lames: 1, cols: 7 }, aniso));
-  }
+  both(g, tubeGeo(rim, 0.13, { closed: true, seg: 200 }), mat.gold);
   return g;
 }
 
-// The chin cord (忍緒) that ties the helmet on, knotted under the chin.
+// Peach-orange silk cords (忍緒) from the helmet down the cheeks, crossing over the chin and
+// knotted under it.
 function chinCord(mat){
   const g = new THREE.Group(); g.name = 'shinobi-no-o';
-  const pts = [V(-9.2, 2.8, 0.6), V(-8.3, -2.5, 1.4), V(-6.5, -6.6, 2.7), V(-3.4, -9.6, 3.9), V(0, -10.55, 4.25), V(3.4, -9.6, 3.9), V(6.5, -6.6, 2.7), V(8.3, -2.5, 1.4), V(9.2, 2.8, 0.6)];
-  g.add(tube(pts, 0.32, mat.cord, { seg: 120, radial: 8 }));
-  const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(0.55, 0.22, 48, 8, 2, 3), mat.cord);
-  knot.position.set(0, -10.7, 4.3); g.add(knot);
-  for (const s of [-1, 1]) g.add(tube([V(s * 0.3, -10.9, 4.4), V(s * 0.6, -12.2, 4.6), V(s * 0.4, -13.6, 4.5)], 0.22, mat.cord, { seg: 20 }));
+  const side = (s) => [V(s * 9.4, 2.6, 0.4), V(s * 8.4, -2.4, 1.6), V(s * 6.6, -6.6, 3.3), V(s * 3.6, -9.6, 5.0), V(s * 0.8, -10.9, 5.9)];
+  for (const s of [-1, 1]){
+    g.add(tube(side(s), 0.42, mat.cord, { seg: 80, radial: 10 }));
+    // a second loop crossing the chin
+    g.add(tube([V(s * 6.4, -7.0, 3.4), V(s * 3.8, -8.4, 5.4), V(-s * 0.6, -9.9, 6.2), V(-s * 1.4, -11.0, 5.9)], 0.38, mat.cord, { seg: 60, radial: 10 }));
+  }
+  const knot = new THREE.Mesh(new THREE.TorusKnotGeometry(0.85, 0.32, 64, 10, 2, 3), mat.cord);
+  knot.position.set(0, -11.1, 6.0); g.add(knot);
+  for (const s of [-1, 1]) g.add(tube([V(s * 0.5, -11.6, 6.0), V(s * 1.2, -12.8, 6.2), V(s * 1.6, -13.8, 6.0)], 0.32, mat.cord, { seg: 20 }));
   return g;
 }
 
-// ------------------------------------------------------------------ face guard (happuri)
-// 半首: black-lacquered iron over the forehead and down both cheeks, open at the eyes, nose and
-// mouth, carved on the face shell a few millimetres off the skin and edged in gilt.
-const GAP = 0.5;
-function happuri(mat){
-  const g = new THREE.Group(); g.name = 'happuri';
-  // the brow plate, under the helmet rim, its lower edge arching over the eyebrows
-  const brow = (u, v) => {
-    const x = (u - 0.5) * 2 * 7.1, yb = 4.25 + 0.012 * x * x, y = yb + (8.2 - yb) * v;
-    return [x, y, faceShell(x, y) + GAP];
-  };
-  // the cheek plates: from below the eye out to the temple, where they join the brow plate
-  const xIn = (y) => 2.9 + 0.22 * Math.max(0, 1.2 - y);
-  const cheek = (u, v) => {
-    const y0 = -6.5 + 1.7 * (1 - u) ** 2, yT = 1.25 + 0.5 * u + 3.6 * smooth(0.62, 0.9, u);
-    const y = y0 + (yT - y0) * v, x = xIn(y) + u * (7.35 - xIn(y));
-    const z = faceShell(x, y) + GAP + 0.45 + 0.3 * Math.exp(-(((x - 4.1) / 1.4) ** 2) - (((y + 0.4) / 1.3) ** 2));
-    return [x, y, z];
-  };
-  const iron = mat.lacquerDS;
-  g.add(new THREE.Mesh(surface(80, 12, brow), iron));
-  both(g, surface(40, 40, cheek), iron);
-  // gilt edges: along the brow arch and round each cheek plate's open sides
-  g.add(tube(edgeOf(brow, 'bottom', 80), 0.13, mat.gold, { seg: 160 }));
-  // one open path: along the top (temple → under the eye), down the inner edge, along the jaw
-  const path = [...edgeOf(cheek, 'top', 40).reverse(), ...edgeOf(cheek, 'left', 30).reverse().slice(1), ...edgeOf(cheek, 'bottom', 40).slice(1)];
-  both(g, tubeGeo(path, 0.13, { seg: 240 }), mat.gold);
-  // a gilt rivet at each temple and on each cheekbone
-  for (const [x, y] of [[6.6, 4.9], [4.3, -0.6]]){
-    const r = new THREE.SphereGeometry(0.26, 12, 8); r.translate(x, y, faceShell(x, y) + GAP + 0.32 + (y < 0 ? 0.7 : 0));
-    both(g, r, mat.gold);
+// ------------------------------------------------------------------ face guard (menpō)
+// Dark iron, carved on the face shell with a hooked nose, cheek folds lined in silver, an open
+// mouth with gilt teeth and a round chin; a white horsehair moustache sweeps out and down.
+const MP = { x0: -7.3, x1: 7.3, y0: -10.6, y1: 3.4 };
+const yTop = (x) => 0.75 + 2.35 * Math.exp(-((x / 1.25) ** 2)) + 0.9 * smooth(5, 7.3, Math.abs(x));
+const yBot = (x) => -10.0 + 0.11 * x * x;
+const gauss = (x, y, cx, cy, sx, sy) => Math.exp(-(((x - cx) / sx) ** 2) - (((y - cy) / sy) ** 2));
+function segDist(x, y, ax, ay, bx, by){
+  const dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)));
+  return Math.hypot(x - ax - t * dx, y - ay - t * dy);
+}
+const FOLDS = [[1.9, -1.4, 3.5, -4.8, 0.3], [2.9, -0.8, 4.6, -4.2, 0.22], [3.6, -0.4, 5.6, -3.4, 0.18], [2.4, -6.0, 4.6, -7.2, 0.16]];
+function menpoAt(x, y){
+  const ax = Math.abs(x);
+  let z = faceShell(x, y) + 0.7;
+  const nm = Math.exp(-((x / 1.7) ** 2)) * smooth(-2.4, -1.2, y) * (1 - smooth(2.4, 3.6, y));
+  z = Math.max(z, (faceZ(x, y) + 0.6) * nm + z * (1 - nm));
+  z += 0.45 * gauss(x, y, 0, -0.5, 0.75, 0.9) + 0.3 * gauss(ax, y, 1.35, -1.25, 0.55, 0.45);
+  z += 0.4 * gauss(ax, y, 3.9, 0.1, 1.5, 1.2);
+  let fold = 0;
+  for (const [a, b, c, d, h] of FOLDS) fold = Math.max(fold, h * Math.exp(-((segDist(ax, y, a, b, c, d) / 0.26) ** 2)));
+  z += fold;
+  z += 0.5 * gauss(x, y, 0, -8.4, 2.4, 1.3); // the round chin
+  const e = (x / 2.4) ** 2 + ((y + 4.6) / 0.95) ** 2;
+  const lips = smooth(1.15, 0.85, e) * smooth(0.3, 0.5, e);
+  const open = smooth(0.42, 0.3, e);
+  z += 0.35 * lips - 1.0 * open;
+  const teeth = open * (y > -4.6 ? 1 : 0);
+  z += 0.55 * teeth;
+  return { z, lips, open, teeth, fold };
+}
+function menpo(mat, aniso){
+  const g = new THREE.Group(); g.name = 'menpo';
+  const f = (u, v) => { const x = MP.x0 + (MP.x1 - MP.x0) * u, y = yBot(x) + (yTop(x) - yBot(x)) * v; return [x, y, menpoAt(x, y).z]; };
+  const geo = surface(130, 96, f);
+  const p = geo.attributes.position, uv = geo.attributes.uv;
+  for (let i = 0; i < p.count; i++) uv.setXY(i, (p.getX(i) - MP.x0) / (MP.x1 - MP.x0), (p.getY(i) - MP.y0) / (MP.y1 - MP.y0));
+  g.add(new THREE.Mesh(geo, M({ map: paintMenpo(aniso), metalness: 0.45, roughness: 0.42, clearcoat: 0.5, clearcoatRoughness: 0.25, side: THREE.DoubleSide })));
+  const edge = [];
+  for (let i = 0; i <= 60; i++) edge.push(V(...f(i / 60, 1)));
+  for (let j = 59; j >= 1; j--) edge.push(V(...f(1, j / 60)));
+  for (let i = 60; i >= 0; i--) edge.push(V(...f(i / 60, 0)));
+  for (let j = 1; j <= 59; j++) edge.push(V(...f(0, j / 60)));
+  g.add(tube(edge, 0.16, M({ color: '#1a1513', metalness: 0.5, roughness: 0.4 }), { closed: true, seg: 400 }));
+  g.add(moustache(mat));
+  return g;
+}
+// The white horsehair moustache: two thick bundles from under the nose sweeping out and down.
+function moustache(mat){
+  const r = rng(77), geos = [];
+  for (const s of [-1, 1]) for (let k = 0; k < 110; k++){
+    const a = r(), b = r() - 0.5;
+    const x0 = s * (0.15 + 0.6 * a), y0 = -2.95 - 0.9 * b;
+    const zAt = (x, y) => menpoAt(x, y).z + 0.25 + 0.25 * r();
+    const pts = [];
+    for (let i = 0; i <= 6; i++){
+      const t = i / 6;
+      const x = x0 + s * (4.0 + 0.8 * b) * Math.sin(t * Math.PI / 2) + s * 0.5 * t * t;
+      const y = y0 - 0.4 * t - 2.6 * t ** 2.2 + 0.6 * b * t;
+      pts.push(V(x, y, zAt(x, y) + 0.2 + 0.7 * Math.sin(Math.PI * t) * (0.6 + 0.4 * a)));
+    }
+    geos.push(tubeGeo(pts, 0.11 + 0.08 * r(), { seg: 14, radial: 4 }));
+  }
+  const merged = mergeAll(geos);
+  return new THREE.Mesh(merged, mat.hair);
+}
+function mergeAll(geos){
+  let n = 0, ni = 0;
+  for (const g of geos){ n += g.attributes.position.count; ni += g.index.count; }
+  const pos = new Float32Array(n * 3), nor = new Float32Array(n * 3), idx = new Uint32Array(ni);
+  let o = 0, oi = 0;
+  for (const g of geos){
+    pos.set(g.attributes.position.array, o * 3); nor.set(g.attributes.normal.array, o * 3);
+    const a = g.index.array; for (let i = 0; i < a.length; i++) idx[oi + i] = a[i] + o;
+    o += g.attributes.position.count; oi += a.length; g.dispose();
+  }
+  const m = new THREE.BufferGeometry();
+  m.setAttribute('position', new THREE.BufferAttribute(pos, 3)); m.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+  m.setIndex(new THREE.BufferAttribute(idx, 1));
+  return m;
+}
+function paintMenpo(aniso){
+  const W = 640, H = Math.round(W * (MP.y1 - MP.y0) / (MP.x1 - MP.x0));
+  const [c, g] = canvas(W, H);
+  const img = g.createImageData(W, H), d = img.data;
+  const r = rng(9);
+  const noise = new Float32Array(64 * 64).map(() => r());
+  const nz = (x, y) => noise[((x * 4) & 63) + ((y * 4) & 63) * 64];
+  for (let j = 0; j < H; j++){
+    const y = MP.y1 - (j + 0.5) / H * (MP.y1 - MP.y0);
+    for (let i = 0; i < W; i++){
+      const x = MP.x0 + (i + 0.5) / W * (MP.x1 - MP.x0);
+      const A = menpoAt(x, y), h = 0.3;
+      const avg = (menpoAt(x + h, y).z + menpoAt(x - h, y).z + menpoAt(x, y + h).z + menpoAt(x, y - h).z) / 4;
+      const cav = Math.max(-1, Math.min(1, (A.z - avg) * 6));
+      const n = nz(x * 3, y * 3) * 0.6 + nz(x * 11, y * 11) * 0.4;
+      let R = 40 * (0.85 + 0.3 * n), G = 31 * (0.85 + 0.3 * n), B = 27 * (0.85 + 0.3 * n);
+      const k = 1 + cav * 0.6; R *= k; G *= k; B *= k;
+      // silver lines along the cheek folds
+      if (A.fold > 0.12){ const m = Math.min(1, (A.fold - 0.12) * 8); R += (205 - R) * m; G += (200 - G) * m; B += (196 - B) * m; }
+      if (A.lips > 0.01){ const m = Math.min(1, A.lips * 1.3); R += (150 - R) * m; G += (64 - G) * m; B += (40 - B) * m; }
+      if (A.open > 0.01){
+        let tr = 30, tg = 14, tb = 10;
+        if (A.teeth > 0.5){ const gap = Math.abs(((x + 10) / 0.5) % 1 - 0.5) < 0.07 || y < -4.3; if (!gap){ tr = 230; tg = 190; tb = 110; } else { tr = 90; tg = 60; tb = 30; } }
+        const m = Math.min(1, A.open * 1.6); R += (tr - R) * m; G += (tg - G) * m; B += (tb - B) * m;
+      }
+      // the small hole under the chin
+      if (Math.hypot(x, y + 9.3) < 0.35){ R = G = B = 6; }
+      const o = (j * W + i) * 4;
+      d[o] = Math.max(0, Math.min(255, R)); d[o + 1] = Math.max(0, Math.min(255, G)); d[o + 2] = Math.max(0, Math.min(255, B)); d[o + 3] = 255;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  return tex(c, { aniso });
+}
+// The throat guard (垂): black lames laced in gold, hanging under the menpō's chin.
+function yodare(aniso){
+  const g = new THREE.Group(); g.name = 'yodare-kake';
+  const lm = lacingMat({ lames: 1, cols: 26, plateFrac: 0.4, dots: true }, aniso);
+  const cz = -2.6;
+  for (let L = 0; L < 3; L++){
+    const yT = -9.4 - L * 2.0, yB = yT - 2.5, r0 = 8.6 + L * 0.95, A = 1.25 + L * 0.07;
+    g.add(new THREE.Mesh(surface(60, 4, (u, v) => { const t = (u - 0.5) * 2 * A, y = yB + (yT - yB) * v, r = r0 + 1.1 * (1 - v) + 0.25 * (2 - L); return [r * Math.sin(t), y, cz + r * Math.cos(t)]; }), lm));
   }
   return g;
 }
@@ -361,82 +400,75 @@ function happuri(mat){
 // Local to the neck pivot; y down the body, +z forward, +x the wearer's left.
 function torso(mat, aniso){
   const g = new THREE.Group(); g.name = 'torso';
-  // the cuirass (胴): a broad, boxy front of red-laced lames, nearly as wide at the waist as
-  // at the chest (Kamakura), with its upper edge cut down at the armpits
-  const cz = -4.2, rx = 16.5, rz = 10.6, A = 1.4, lames = 7, yT0 = -9.6, yB = -40;
+  const cz = -4.2, rx = 16.0, rz = 10.6, A = 1.4, yT0 = -8.8, yB = -38;
   const top = (t) => yT0 - 5 * smooth(0.6, 1.25, Math.abs(t));
-  const lh = (yT0 - yB) / lames;
+  // the cuirass: black lames laced in gold rows, with rows of studs between
+  const lames = 10, lh = (yT0 - yB) / lames;
   const fdo = (u, v) => {
     const t = (u - 0.5) * 2 * A, yTop = top(t), y = yB + (yTop - yB) * v;
-    const step = 0.35 * (((yT0 - y) / lh) % 1);
+    const step = 0.3 * (((yT0 - y) / lh) % 1);
     return [rx * Math.sin(t) * (1 + step / rx), y, cz + (rz + step) * Math.cos(t)];
   };
-  g.add(new THREE.Mesh(surface(90, 70, fdo), lacingMat({ lames, cols: 52, knots: true }, aniso)));
-  // the breastplate (胸板): iron faced with stencilled leather, gilt-edged, across the top
-  const MB = 0.62;
-  const fmb = (u, v) => { const t = (u - 0.5) * 2 * MB, y = yT0 - 0.2 + 3.4 * v; return [(rx + 0.45) * Math.sin(t), y, cz + (rz + 0.45) * Math.cos(t) - 0.15 * v]; };
-  g.add(new THREE.Mesh(surface(40, 6, fmb), mat.leather(2.2, 0.5)));
-  for (const w of ['top', 'bottom']) g.add(tube(edgeOf(fmb, w, 40), 0.16, mat.gold, { seg: 80 }));
-  // the bowstring panel (弦走韋): stencilled leather down the front, so the bowstring
-  // cannot catch on the lacing
-  const TB = 0.5;
-  const ftb = (u, v) => { const t = (u - 0.5) * 2 * TB, y = -33 + (yT0 - 0.4 - -33) * v; return [(rx + 0.3) * Math.sin(t), y, cz + (rz + 0.38) * Math.cos(t)]; };
-  g.add(new THREE.Mesh(surface(30, 30, ftb), mat.leather(1.6, 2.6)));
-  for (const w of ['left', 'right', 'bottom']) g.add(tube(edgeOf(ftb, w, 30), 0.12, mat.cord, { seg: 60 }));
-  // shoulder straps (肩上) to the back, each with its upright guard (障子の板) by the neck
+  g.add(new THREE.Mesh(surface(90, 80, fdo), lacingMat({ lames, cols: 60, plateFrac: 0.45, dots: true }, aniso)));
+  // the collar (eriwa) and top edge
+  g.add(tube(edgeOf(fdo, 'top', 60), 0.3, mat.lacquer, { seg: 160 }));
+  // the centre panel: brown, with a silver dragon in clouds, edged in silver
+  const TB = 0.55;
+  const fp = (u, v) => { const t = (u - 0.5) * 2 * TB, y = -33.5 + (-14.5 - -33.5) * v; return [(rx + 0.35) * Math.sin(t), y, cz + (rz + 0.42) * Math.cos(t)]; };
+  g.add(new THREE.Mesh(surface(30, 30, fp), M({ map: dragonTexture(aniso), roughness: 0.55, clearcoat: 0.5, clearcoatRoughness: 0.3, side: THREE.DoubleSide })));
+  const silver = M({ color: '#c9c4c0', metalness: 0.9, roughness: 0.3 });
+  for (const w of ['left', 'right', 'top', 'bottom']) g.add(tube(edgeOf(fp, w, 30), 0.14, silver, { seg: 60 }));
+  // the belt: an orange silk cord round the waist, knotted at the front
+  const belt = [];
+  for (let i = 0; i <= 50; i++){ const t = (i / 50 - 0.5) * 2 * 1.38; belt.push(V((rx + 0.9) * Math.sin(t), -35.2, cz + (rz + 0.9) * Math.cos(t))); }
+  g.add(tube(belt, 0.75, mat.cord, { seg: 120, radial: 10 }));
+  const bk = new THREE.Mesh(new THREE.TorusKnotGeometry(1.0, 0.42, 64, 10, 2, 3), mat.cord); bk.position.set(0, -35.2, cz + rz + 1.9); g.add(bk);
+  // gold fittings at the top of the chest with their big gold tassels
   for (const s of [-1, 1]){
-    g.add(tube([V(s * 8.2, top(0.52) + 0.1, cz + rz * Math.cos(0.52) - 0.3), V(s * 9.4, -6.3, -0.5), V(s * 9.8, -6.6, -7.5)], 0.9, mat.lacquer, { seg: 30, radial: 10 }));
+    const x = s * 7.4, zt = cz + rz * Math.cos(Math.asin(x / rx)) + 0.8;
+    const pl = new THREE.Shape(); pl.moveTo(-1.1, 0); pl.lineTo(1.1, 0); pl.lineTo(1.3, 3.6); pl.quadraticCurveTo(0, 4.6, -1.3, 3.6); pl.lineTo(-1.1, 0);
+    const pg = new THREE.ExtrudeGeometry(pl, { depth: 0.25, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.06, bevelSegments: 1 });
+    pg.translate(x, -14.2, zt); g.add(new THREE.Mesh(pg, mat.gold));
+    for (const dx of [-0.5, 0.5]){ const h = new THREE.CircleGeometry(0.28, 12); h.translate(x + dx, -12.0, zt + 0.4); g.add(new THREE.Mesh(h, M({ color: '#1a1410' }))); }
+    g.add(tube([V(x, -14.2, zt + 0.2), V(x, -16, zt + 0.5), V(x, -17.4, zt + 0.6)], 0.25, mat.gold, { seg: 12 }));
+    const knob = new THREE.SphereGeometry(0.75, 14, 10); knob.scale(1, 1.2, 1); knob.translate(x, -17.9, zt + 0.6); g.add(new THREE.Mesh(knob, mat.gold));
+    // the tassel: a flared skirt of gilt threads
+    const tas = new THREE.CylinderGeometry(0.6, 1.9, 6.4, 40, 1, true); tas.translate(x, -21.6, zt + 0.7);
+    const tp = tas.attributes.position;
+    for (let i = 0; i < tp.count; i++){ const a = Math.atan2(tp.getZ(i) - (zt + 0.7), tp.getX(i) - x); const w = 1 + 0.06 * Math.sin(a * 20); tp.setX(i, x + (tp.getX(i) - x) * w); tp.setZ(i, zt + 0.7 + (tp.getZ(i) - zt - 0.7) * w); }
+    tas.computeVertexNormals();
+    g.add(new THREE.Mesh(tas, M({ color: '#d4ab55', metalness: 0.6, roughness: 0.45, side: THREE.DoubleSide })));
   }
-  const sj = new THREE.Shape(); sj.absarc(0, 0, 3.2, 0, Math.PI, false); sj.lineTo(3.2, 0);
-  const sjg = new THREE.ExtrudeGeometry(sj, { depth: 0.25, bevelEnabled: true, bevelThickness: 0.06, bevelSize: 0.06, bevelSegments: 1 });
-  const pu = sjg.attributes.position, uvs = sjg.attributes.uv;
-  for (let i = 0; i < pu.count; i++) uvs.setXY(i, (pu.getX(i) + 3.2) / 6.4, pu.getY(i) / 3.2);
-  sjg.rotateY(Math.PI / 2 - 0.35); sjg.translate(10.6, -5.4, -3.2);
-  both(g, sjg, mat.leather(1, 1));
-  // the chest guards hanging in front of the armpits: on the right (栴檀板) three laced lames
-  // under a leather-faced top plate; on the left (鳩尾板) one solid leather-faced iron plate
-  const chestPlate = (x0, laced) => {
-    const f = (u, v) => { const x = x0 + (u - 0.5) * 6.4, y = -21.5 + 13.5 * v; return [x, y, 6.9 + 0.7 * Math.cos((x - x0) / 6) - 0.04 * (x - x0) ** 2]; };
-    const sub = new THREE.Group();
-    if (laced){
-      sub.add(new THREE.Mesh(surface(16, 20, (u, v) => f(u, v * 0.78)), lacingMat({ lames: 3, cols: 7, knots: true }, aniso)));
-      const kf = (u, v) => f(u, 0.78 + 0.22 * v);
-      sub.add(new THREE.Mesh(surface(16, 4, kf), mat.leather(0.8, 0.3)));
-      for (const w of ['top', 'bottom']) sub.add(tube(edgeOf(kf, w, 16), 0.12, mat.gold, { seg: 32 }));
-    } else {
-      const ff = (u, v) => { const p = f(u, v); const taper = 1 - 0.25 * (1 - v); return [x0 + (p[0] - x0) * taper, p[1], p[2]]; };
-      sub.add(new THREE.Mesh(surface(16, 20, ff), mat.leather(0.9, 1.6)));
-      for (const w of ['left', 'right', 'top', 'bottom']) sub.add(tube(edgeOf(ff, w, 20), 0.14, mat.gold, { seg: 40 }));
-    }
-    return sub;
-  };
-  g.add(chestPlate(-11.6, true), chestPlate(11.6, false));
-  // the great shoulder guards (大袖): big, nearly flat panels of seven lames under a
-  // leather-faced top plate (冠板) with gilt rosettes
-  const sw = 15, sh = 27, sx = 20.2, sy0 = -6.6;
+  // shoulder pieces over each shoulder: gold-laced lames curving from the neck to the arm
+  const sp = (u, v) => { const t = u * 1.5, x = 9 + 8.5 * Math.sin(t * 0.9) , y = -6.4 - 2.8 * u - 1.2 * v; return [x, y + 0.6 * Math.sin(Math.PI * v), -3.8 + 7.2 * (v - 0.5) * (1 - 0.25 * u)]; };
+  both(g, surface(24, 10, sp), lacingMat({ lames: 3, cols: 10, plateFrac: 0.45, dots: true }, aniso));
+  // the shoulder guards (sode): curved panels of seven gold-laced lames
+  const sw = 13, sh = 21, sx = 19.2, sy0 = -8.4;
   const fs = (u, v) => {
-    const a = (u - 0.5) * sw / 22, y = sy0 - 1.6 - (sh - 1.6) * (1 - v);
-    const flare = 1 + 0.05 * (1 - v);
-    return [sx + 22 * flare * Math.sin(a) * 0.55, y, -1.5 + 22 * flare * (Math.cos(a) - 1) + 0.3 * (1 - v) - (u - 0.5) * 7];
+    const a = (u - 0.5) * sw / 16, y = sy0 - 1.2 - (sh - 1.2) * (1 - v);
+    const flare = 1 + 0.08 * (1 - v);
+    return [sx + 16 * flare * Math.sin(a) * 0.55, y, -1.8 + 16 * flare * (Math.cos(a) - 1) + 0.3 * (1 - v) - (u - 0.5) * 6];
   };
-  both(g, surface(40, 50, fs), lacingMat({ lames: 7, cols: 16, knots: true }, aniso));
-  const kf = (u, v) => { const p = fs(u, 1); return [p[0], p[1] + 1.8 * v, p[2] - 0.2 * v]; };
-  both(g, surface(40, 4, kf), mat.leather(1.6, 0.3));
-  for (const w of ['top', 'bottom']) both(g, tubeGeo(edgeOf(kf, w, 40), 0.15, { seg: 80 }), mat.gold);
-  for (const u of [0.2, 0.5, 0.8]){ const p = kf(u, 0.5); const r = new THREE.SphereGeometry(0.32, 10, 6); r.translate(p[0], p[1], p[2] + 0.25); both(g, r, mat.gold); }
-  // the box skirt (草摺): four panels of five lames — front, left, right (the right one hangs
-  // from the separate side guard, 脇楯) and back
-  const km = lacingMat({ lames: 5, cols: 14, knots: true }, aniso);
-  for (const [t0, t1] of [[-0.62, 0.62], [0.66, 1.42], [-1.42, -0.66]]){
-    const f = (u, v) => { const t = t0 + (t1 - t0) * u, y = -57 + 17.5 * v, r = 1 + 0.06 * (1 - v); return [rx * r * Math.sin(t), y, cz + rz * r * Math.cos(t) + 0.3]; };
-    g.add(new THREE.Mesh(surface(16, 14, f), km));
+  both(g, surface(40, 50, fs), lacingMat({ lames: 7, cols: 14, plateFrac: 0.5, dots: true }, aniso));
+  both(g, tubeGeo(edgeOf(fs, 'top', 40), 0.2, { seg: 80 }), mat.lacquer);
+  // the skirt (kusazuri): seven gold-laced panels, the bottom lame studded
+  const km = lacingMat({ lames: 7, cols: 10, plateFrac: 0.12, dots: true, pal: YELLOW }, aniso);
+  const panels = [[-0.5, -0.02], [0.02, 0.5], [0.54, 1.0], [1.04, 1.42], [-1.0, -0.54], [-1.42, -1.04]];
+  for (const [t0, t1] of panels){
+    const f = (u, v) => { const t = t0 + (t1 - t0) * u, y = -54 + 17.6 * v, r = 1 + 0.1 * (1 - v); return [rx * r * Math.sin(t), y, cz + rz * r * Math.cos(t) + 0.6]; };
+    g.add(new THREE.Mesh(surface(14, 16, f), km));
+    g.add(studs(edgeOf(f, 'bottom', 12).map((p) => p.add(V(0, 0.9, 0.3))), 0.32, mat.stud));
+  }
+  // the thigh guard (haidate) below: dark scales with an olive knee plate on each side
+  const hm = M({ map: haidateTexture(aniso), roughness: 0.6, clearcoat: 0.3, side: THREE.DoubleSide });
+  for (const s of [-1, 1]){
+    const f = (u, v) => { const t = s * (0.08 + 0.75 * u), y = -72 + 20 * v; return [(rx - 2) * Math.sin(t), y, cz + (rz - 1) * Math.cos(t) + 0.2]; };
+    g.add(new THREE.Mesh(surface(16, 16, s > 0 ? f : (u, v) => f(1 - u, v)), hm));
   }
   return g;
 }
 
 // ------------------------------------------------------------------ occluders
-// Depth-only stand-ins for the real head and neck, so the back of the neck guard hides
-// behind the wearer instead of drawing across the face.
 export function occluders(){
   const mat = new THREE.MeshBasicMaterial({ colorWrite: false });
   const g = new THREE.Group(); g.name = 'occluders';
@@ -450,25 +482,27 @@ export function occluders(){
 }
 
 // ------------------------------------------------------------------ the whole suit
-export function buildSuit(id = 'oyoroi', { aniso = 8, menpo: withFace } = {}){
+export function buildSuit(id = 'gusoku', { aniso = 8, menpo: withFace } = {}){
   const t0 = performance.now();
   const mat = materials(aniso);
   const root = new THREE.Group(); root.name = id;
   const head = new THREE.Group(); head.name = 'kabuto';
   const sk = shikoro(aniso);
-  head.add(bowl(mat), visor(mat), horns(mat), sk.g, flaps(mat, aniso, sk.lames), chinCord(mat));
+  head.add(bowl(mat), visor(mat), crest(mat), sk.g, flaps(mat, sk.lames), chinCord(mat));
   const face = new THREE.Group(); face.name = 'faceguard';
-  face.add(happuri(mat));
+  face.add(menpo(mat, aniso));
+  const lower = yodare(aniso);
+  head.add(lower);
   root.add(head, face);
   const body = torso(mat, aniso);
-  root.userData = { head, face, body, buildMs: 0 };
+  root.userData = { head, face, lower, body, buildMs: 0 };
   setMenpo(root, withFace ?? true);
   root.userData.buildMs = Math.round(performance.now() - t0);
   return root;
 }
 
-// The face guard on or off; the chin cord ties the helmet on either way.
-export function setMenpo(root, on){ root.userData.face.visible = on; }
+// The menpō (with its throat guard) on or off; the chin cords tie the helmet on either way.
+export function setMenpo(root, on){ root.userData.face.visible = on; root.userData.lower.visible = on; }
 
 export function disposeSuit(root){
   const seen = new Set();

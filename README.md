@@ -1,8 +1,8 @@
 # ⛩ Samurai Wear: a scan-to-wear WebAR samurai helmet
 
 Point your phone at the printed **Samurai Wear card**. When the card is recognised the armour
-room opens. Turn the camera round to yourself and put on the **Ō-yoroi** helmet of the first samurai,
-with its iron face guard (happuri) and armour, then take a photo. Made for ages 8–14.
+room opens. Turn the camera round to yourself and put on the **kabuto** helmet of a real samurai armour
+from about 1650 in the Metropolitan Museum of Art, with its iron face mask (menpō) and armour, then take a photo. Made for ages 8–14.
 
 **Play:** https://naomirajwanshi02.github.io/Samurai_Wear/ · **Locally:** `http://localhost:8127/`
 **Without the card:** https://naomirajwanshi02.github.io/Samurai_Wear/?demo=1 · **Without any camera:** https://naomirajwanshi02.github.io/Samurai_Wear/?preview=1
@@ -32,54 +32,43 @@ with its iron face guard (happuri) and armour, then take a photo. Made for ages 
      every frame), a skull and a neck. Whatever is behind your real face or head (the far flap, the far side
      of the neck guard when you turn) is hidden exactly, so the helmet goes round your head instead of
      drawing across your face.
-   - **Fits the face.** The iron happuri is *skinned* to the live landmarks so it follows your face shape;
-     its cheek plates sit clear of a smiling cheek.
+   - **Fits the face.** The iron menpō is *skinned* to the live landmarks so it follows your face shape;
+     its mouth stays shut when you talk.
    - The armour hangs from your neck and turns only a quarter as far as your head, the way a body does.
    - The name card shrinks to its title after 5 seconds so it never hides the helmet; tap it to open it.
-5. **Toggles.** **Face guard** puts the happuri on or off (it starts on; the red chin cord ties the helmet on either way).
+5. **Toggles.** **Face guard** puts the menpō and its throat guard on or off (it starts on; the orange chin cords tie the helmet on either way).
    **Armour** shows or hides the cuirass, shoulder guards and skirt.
 6. **Photo.** The round button saves the mirrored selfie with the armour and a small caption plate.
 
-## The Ō-yoroi 大鎧
+## The gusoku 具足, about 1650
 
-The "great armour" of the first samurai, the mounted archers of the Heian and Kamakura periods
-(900s–1300s). It follows reference 2 (`assets/refs/oyoroi-ref.webp`) and was cross-checked part by part
-against period descriptions, chiefly the National Treasure red-laced ō-yoroi of Kasuga Taisha
-(赤絲威鎧, late Kamakura) and the blue-laced ō-yoroi of Ōyamazumi Shrine (紺絲威鎧). Sources are in
-[SOURCES.md](SOURCES.md).
+The suit is the **Armor (Gusoku)** of about 1650 in the Metropolitan Museum of Art, New York
+(accession 36.25.41a–q, Bequest of George C. Stone, 1935; helmet signed by the armourer Saotome Ietada;
+materials listed as iron, leather, lacquer, silk, textile, hair and copper alloy). The museum's online record
+has no photograph or description, so every part follows the reference drawing of the armour
+(`assets/refs/gusoku-1650-ref.jpg`).
 
 | Part | | What is built |
 |---|---|---|
-| **Hoshi kabuto** | 星兜 | black-lacquered iron bowl of 16 riveted plates, each plate standing proud of the next; rows of big raised rivets (厳星) growing toward the rim |
-| **Shinodare** | 篠垂 | gilt strips with leaf-shaped arrow tips running down from the crown, three in front and three behind (六方白), riveted |
-| **Tehen no za** | 天辺の座 | the open hole at the crown (for the topknot) with a stacked gilt chrysanthemum seat |
-| **Koshimaki** | 腰巻 | the band round the rim, black with a gilt edge |
-| **Mabizashi** | 眉庇 | the visor, its top faced with stencilled leather (egawa), dark underneath, gilt-edged |
-| **Kuwagata-dai** | 鍬形台 | the horn stand **on the visor**, bearing a gilt lion's face (獅噛) with red jewelled eyes |
-| **Kuwagata** | 鍬形 | two tall gilt horns rising from the stand, with an engraved line along each |
-| **Shikoro** | 錣 | five red-laced lames hanging steeply in the cedar shape (杉形), each lapping over the next; red-and-white cross-knots (菱縫) on the bottom lame |
-| **Fukigaeshi** | 吹返 | the front ends of the upper four lames turned back beside the face: the top one a big leather-faced flap with a gilt rim and rosettes, the three below as stepped laced ends |
-| **Shinobi-no-o** | 忍緒 | the red chin cord, knotted under the chin |
-| **Happuri** | 半首 | the face guard of the period: black-lacquered iron over the forehead and both cheeks, gilt-edged, leaving the eyes, nose and mouth open |
-| **Dō** | 胴 | the boxy, red-laced cuirass, nearly as wide at the waist as the chest |
-| **Munaita** | 胸板 | the leather-faced, gilt-edged breastplate across the top |
-| **Tsurubashiri** | 弦走韋 | the stencilled leather down the front, so the bowstring cannot catch on the lacing |
-| **Sendan-no-ita / Kyūbi-no-ita** | 栴檀板・鳩尾板 | the chest guards in front of the armpits: three laced lames on the right, one solid leather-faced plate on the left |
-| **Watagami / Shōji-no-ita** | 肩上・障子の板 | the shoulder straps and the upright guards by the neck that stop the shoulder guards hitting the head |
-| **Ō-sode** | 大袖 | the great shoulder guards: big, nearly flat panels of seven red-laced lames under a leather-faced top plate with gilt rosettes |
-| **Kusazuri** | 草摺 | the box skirt of four panels of five lames (front, left, right; the back one is behind you) |
+| **Kabuto** | 兜 | black-lacquered ridged bowl (suji-bachi) of 62 plates, typical of the Saotome school; gilt ring round the crown hole, gilt-edged rim band |
+| **Kuwagata** | 鍬形 | a wide pale-gold crescent across the front, its arms rising to flared fish-tail tips, with three gilt rivets |
+| **Crest stand and ornament** | 前立 | a tall dark-brown rounded stand behind the crescent, with a gilt ring above a gilt bell-shaped ornament with incised bands |
+| **Mabizashi** | 眉庇 | black visor with silver scrollwork, gilt edge, dark underside |
+| **Fukigaeshi** | 吹返 | big black side flaps facing forward, with fine silver scrollwork, two columns of gilt studs and a gilt rim |
+| **Shikoro** | 錣 | a wide umbrella-shaped neck guard (kasa-jikoro) of five black lames with rows of orange studs; the lowest lame red-brown |
+| **Shinobi-no-o** | 忍緒 | peach-orange silk cords down the cheeks, crossing over the chin and knotted under it |
+| **Menpō** | 面頬 | dark iron half mask with a hooked nose, silver-lined cheek folds, an open mouth with gilt teeth, a round chin with a small hole, and a big white horsehair moustache (the museum lists hair among the materials) |
+| **Yodare-kake** | 垂 | the throat guard under the mask: black lames laced in gold |
+| **Dō** | 胴 | the cuirass: black lames laced in gold rows with stud rows between |
+| **Chest panel** | | brown, with a silver dragon coiling through clouds, edged in silver |
+| **Tassels** | | two big gold tassels hanging from gilt fittings at the top of the chest |
+| **Belt** | 上帯 | an orange silk cord round the waist, knotted at the front |
+| **Shoulder pieces and Sode** | 袖 | gold-laced lames over the shoulders, and curved shoulder guards of seven gold-laced lames |
+| **Kusazuri** | 草摺 | the skirt: six panels of gold-laced lames with a row of gilt studs along the bottom |
+| **Haidate** | 佩楯 | the thigh guard under the skirt: small black scales laced in grey, with an olive knee plate of tortoise-shell hexagons |
 
-**Left out on purpose, because they are from later armour:** the wide, flat "umbrella" neck guard (笠錣,
-Muromachi period) and the menpō face mask with a nose and moustache (from the mid-1400s). The big decorative
-bow on the back (agemaki) is not built because it is never seen in a selfie.
-
-The egawa leather is painted as the period's stencilled deer-skin: a buff ground of indigo "hail" dots
-(霰地) with peony roundels. The lacing is aka-ito odoshi: black-lacquered scales laced with red silk.
-
-No 3D model files are downloaded: the suit is built in the browser from code (`js/armour.js`), in
-MindAR's canonical face units (centimetres), and painted with canvas textures (`js/paint.js`): every laced
-lame has a colour map and a matching bump map so the silk cords stand up from the lacquered plates.
-
+**Not built:** the arm guards (kote), shin guards (suneate) and shoes in the drawing. Face AR tracks your head,
+not your arms and legs, so armour on them would not move with you.
 ## The Anatomy look
 
 The interface uses the [Anatomy](https://github.com/wheresryan22/anatomy) skill (MIT) in the same sepia
@@ -92,7 +81,7 @@ holds the token set; the kit is in [`vendor/anatomy/`](vendor/anatomy); the skil
 
 - Print `target.png` about **18 cm wide** (3:2, about 18 × 12 cm) on **matte** paper.
 - Hold the phone 20–40 cm away, in even light. The card also works on a laptop or tablet screen.
-- The compiled target scores **3,358 detection points over 11 scales, with 43 tracking points**
+- The compiled target scores **3,371 detection points over 11 scales, with 45 tracking points**
   (Noh_Masks' card: 3,623 / 52).
 
 ## Files
@@ -103,10 +92,10 @@ holds the token set; the kit is in [`vendor/anatomy/`](vendor/anatomy); the skil
 | `js/app.js` | The flow: scan → welcome → camera → tray and toggles, plus hints, facts and photo. |
 | `js/scan.js` | Card recognition (MindAR image). |
 | `js/stage.js` | Face AR (MindAR face): the helmet on the face pose, the armour on the neck, the no-camera preview on MindAR's canonical face, photos. |
-| `js/armour.js` | The Ō-yoroi, part by part (see the table above), and the head/neck occluders. |
-| `js/paint.js` | Canvas painters: red-laced lames (kebiki) with cross-knots, egawa stencilled leather, lacquer grain. |
+| `js/armour.js` | The 1650 gusoku, part by part (see the table above), and the head/neck occluders. |
+| `js/paint.js` | Canvas painters: gold-laced lames (kebiki) with stud rows, silver scrollwork, the dragon panel, thigh-guard scales, lacquer grain. |
 | `js/data.js` | Names, kanji, eras, kid-friendly blurbs, parts and facts. |
-| `js/face-fit.js` / `js/face-model.js` | MindAR's canonical face, the face shell the happuri is carved on, and the landmark skinning (shared with Noh_Masks). |
+| `js/face-fit.js` / `js/face-model.js` | MindAR's canonical face, the face shell the menpō is carved on, and the landmark skinning (shared with Noh_Masks). |
 | `js/look.js` | Lighting, environment, tone mapping and room-light matching (shared with Noh_Masks). |
 | `tools/suit-sheet.html` | Renders the suit on the canonical face. `?yaw=0.5&menpo=0&body=0&dist=80`. `?save=1` rewrites `assets/thumbs/oyoroi.png`. |
 | `tools/make-target.html` | Redraws `target.png` from the thumbnails and compiles `targets.mind` (`?build=1`). |
