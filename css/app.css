@@ -184,3 +184,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .chip.toggle[aria-pressed="false"]{opacity:.55;filter:grayscale(.6)}
 /* the name card has no corner labels now */
 .namecard{padding-top:10px}
+
+/* cross back to the Scan to Wear hub (shown only when opened from it) */
+.hubback{position:fixed;z-index:50;top:calc(var(--safe-t) + 10px);right:calc(var(--safe-r) + 10px);pointer-events:auto}
+.hubback[hidden]{display:none}
+body.from-hub #hud .iconcol{display:none}
