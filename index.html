@@ -35,7 +35,7 @@
 <section id="perm" class="screen dim">
   <div class="col center">
     <div class="plate welcome">
-      <span class="corner tl">Fig. 00</span><span class="corner tr">Camera</span>
+
       <div class="permicon" aria-hidden="true"><svg viewBox="0 0 48 48" width="56" height="56"><rect x="5" y="13" width="38" height="27" rx="5" fill="none" stroke="currentColor" stroke-width="3"/><path d="M17 13l3-5h8l3 5" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><circle cx="24" cy="26.5" r="7.5" fill="none" stroke="currentColor" stroke-width="3"/></svg></div>
       <h1>Allow camera access</h1>
       <p>This page needs your camera. Tap the button, then choose <b>Allow</b>.</p>
@@ -47,7 +47,7 @@
 
 <!-- ============ 1 · VIEWFINDER: find the card ============ -->
 <div id="guide" class="overlay">
-  <div class="scan-top plate"><b>Point your camera at the card</b><span class="cap">The armour room opens as soon as it's found</span></div>
+  <div class="scan-top plate"><b>Point your camera at the card</b></div>
   <div class="frame"><i></i><i></i><i></i><i></i><div class="sweep"></div></div>
   <div class="scan-bottom">
     <div class="status" id="scanStatus">Starting camera…</div>
@@ -59,13 +59,13 @@
   </div>
 </div>
 
-<div id="found" class="overlay"><div class="plate badge"><div class="stamp">侍</div><b>Found it!</b><span>The armour room is open</span></div></div>
+<div id="found" class="overlay"><div class="plate badge"><div class="stamp">✓</div><b>Found it!</b><span>The armour room is open</span></div></div>
 
 <!-- ============ 2 · WELCOME ============ -->
 <section id="intro" class="screen dim">
   <div class="col center">
     <div class="plate welcome">
-      <span class="corner tl">Fig. 01</span><span class="corner tr">Samurai · 侍</span>
+
       <img class="hero-figure" id="introImg" src="assets/gusoku-illustration.png" alt="The samurai armour of about 1650">
       <h1>Wear a samurai helmet!</h1>
       <p>Put on a real <b>samurai</b> armour from about <b>1650</b>, now at the Metropolitan Museum of Art: a <b>kabuto</b> helmet with a golden crest, an iron face mask with a white moustache, and armour laced with gold silk.</p>
@@ -79,7 +79,7 @@
       <button class="btn red" id="goBtn">Allow camera &amp; start</button>
       <div class="status dark" id="camStatus"></div>
       <button class="link" id="previewBtn">No camera? Look at the armour instead</button>
-      <span class="corner bl">ages 8–14</span><span class="corner br">Gusoku · 具足 · c. 1650</span>
+
     </div>
   </div>
 </section>
@@ -90,7 +90,7 @@
     <div class="hud-left">
     <div class="plate namecard" id="namecard">
 
-      <div class="nc-main"><b id="ncName"></b><span class="jp" id="ncJp"></span></div>
+      <div class="nc-main"><b id="ncName"></b></div>
       <div class="nc-blurb" id="ncBlurb"></div>
     </div>
     <div class="hint" id="hint" role="status" aria-live="polite"></div>
@@ -120,7 +120,7 @@
 <section id="photo" class="screen dim">
   <div class="col center">
     <div class="plate photocard">
-      <span class="corner tl">Your photo</span><span class="corner tr" id="photoName"></span>
+
       <img id="photoImg" alt="Your photo wearing a samurai helmet">
       <div class="row">
         <a class="btn red small" id="saveBtn" download="samurai.jpg">Save</a>

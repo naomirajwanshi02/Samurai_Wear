@@ -52,11 +52,11 @@ async function draw(){
   // title block
   g.fillStyle = '#2b1e13'; g.font = '700 70px Georgia,"Times New Roman",serif'; g.fillText('SAMURAI', 80, 150);
   g.fillStyle = '#b5452f'; g.font = 'italic 700 112px Georgia,"Times New Roman",serif'; g.fillText('Wear', 84, 270);
-  g.fillStyle = '#5b4630'; g.font = '22px Consolas,monospace'; g.fillText('FIG. 01 · GUSOKU c. 1650 · THE MET · 具足', 84, 330);
+  g.fillStyle = '#5b4630'; g.font = '22px Consolas,monospace'; g.fillText('GUSOKU c. 1650 · THE METROPOLITAN MUSEUM OF ART', 84, 330);
   // big seal
   g.save(); g.translate(740, 210); g.rotate(-0.22);
   g.strokeStyle = '#b5452f'; g.lineWidth = 8; g.beginPath(); g.arc(0, 0, 78, 0, 6.28); g.stroke();
-  g.fillStyle = '#b5452f'; g.font = '900 84px "Yu Gothic","Meiryo",sans-serif'; g.textAlign = 'center'; g.fillText('侍', 0, 30);
+  g.fillStyle = '#b5452f'; g.font = '900 84px "Yu Gothic","Meiryo",sans-serif'; g.textAlign = 'center'; g.beginPath(); g.arc(0, 0, 52, 0, 6.29); g.lineWidth = 5; g.strokeStyle = '#b5452f'; g.stroke(); for (let k = 0; k < 8; k++){ const a = k * Math.PI / 4; g.beginPath(); g.arc(Math.cos(a) * 30, Math.sin(a) * 30, 9, 0, 6.29); g.fill(); } g.beginPath(); g.arc(0, 0, 12, 0, 6.29); g.fill();
   g.restore(); g.textAlign = 'left';
 
   // the reference illustration of the armour (cut out of its white paper by tools/cutout.html)
@@ -68,17 +68,16 @@ async function draw(){
     g.save(); g.translate(x + s / 2, y + s / 2); g.rotate(rot * Math.PI / 180);
     g.drawImage(img, -w / 2, -s / 2, w, s);
     g.fillStyle = '#3b2a1c'; g.font = '700 17px Consolas,monospace'; g.textAlign = 'center';
-    g.fillText(`${String(i + 1).padStart(2, '0')} ${m.name.toUpperCase()}`, 0, s / 2 + 8);
-    g.fillStyle = '#8c7457'; g.font = '17px "Yu Gothic","Meiryo",sans-serif'; g.fillText(m.jp, 0, s / 2 + 30);
+    g.fillText(m.name.toUpperCase(), 0, s / 2 + 8);
     g.restore();
   }
-  // vertical kana down the right edge
-  g.fillStyle = '#3b2a1c'; g.font = '900 96px "Yu Gothic","Meiryo",sans-serif'; g.textAlign = 'center';
-  ['さ', 'む', 'ら', 'い'].forEach((ch, i) => g.fillText(ch, 1405, 520 + i * 110));
+  // vertical lettering down the right edge
+  g.fillStyle = '#3b2a1c'; g.font = '700 54px Georgia,"Times New Roman",serif'; g.textAlign = 'center';
+  ['S', 'A', 'M', 'U', 'R', 'A', 'I'].forEach((ch, i) => g.fillText(ch, 1405, 500 + i * 62));
   g.strokeStyle = '#b5452f'; g.lineWidth = 3; g.strokeRect(1350, 430, 110, 460);
   // the roles, bottom left, as fine print
   g.textAlign = 'left'; g.font = '16px Consolas,monospace';
-  ['KABUTO 兜 · HELMET', 'KUWAGATA 鍬形 · CREST', 'MENPŌ 面頬 · FACE MASK', 'FUKIGAESHI 吹返 · FLAPS', 'SHIKORO 錣 · NECK GUARD', 'DŌ 胴 · BODY ARMOUR', 'SODE 袖 · SHOULDER GUARDS', 'KUSAZURI 草摺 · SKIRT'].forEach((t, i) => { g.fillStyle = i % 3 ? '#5b4630' : '#b5452f'; g.fillText(`${String(i + 1).padStart(2, '0')} ${t}`, 86, 430 + i * 36); });
+  ['KABUTO · HELMET', 'KUWAGATA · CREST', 'MENPŌ · FACE MASK', 'FUKIGAESHI · FLAPS', 'SHIKORO · NECK GUARD', 'DŌ · BODY ARMOUR', 'SODE · SHOULDER GUARDS', 'KUSAZURI · SKIRT'].forEach((t, i) => { g.fillStyle = i % 3 ? '#5b4630' : '#b5452f'; g.fillText(`${String(i + 1).padStart(2, '0')} ${t}`, 86, 430 + i * 36); });
   const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
   out.innerHTML = '';
   const shown = new Image(); shown.src = URL.createObjectURL(blob); out.appendChild(shown);

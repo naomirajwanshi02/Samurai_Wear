@@ -35,10 +35,14 @@ from about 1650 in the Metropolitan Museum of Art, with its iron face mask (menp
    - **Fits the face.** The iron menpō is *skinned* to the live landmarks so it follows your face shape;
      its mouth stays shut when you talk.
    - The armour hangs from your neck and turns only a quarter as far as your head, the way a body does.
+   - **Fits each face.** Like a head-wear lens, the helmet adapts to you: every frame it measures your face from the
+     landmarks (cheek-to-cheek width, brow-to-chin height, where your eyebrows are) against MindAR's canonical face,
+     scales the helmet, lining and neck guard to it and drops the brim onto your brow line, smoothed so it settles
+     in about a second. The chin cords are tied to the face landmarks like the mask, so they follow your cheeks and jaw.
    - **Covers the whole head.** The bowl is sized for a head with hair, its brim sits on the eyebrows, and a dark
      lining wraps the sides and back of the head from the rim to below the jaw, so no hair or ears show between
      the mask and the neck guard (in the drawing, the space round the face inside the helmet is dark).
-   - The screen stays clear for the AR: the name card shows just the name (it shrinks after 5 seconds; tap to
+   - The screen stays clear for the AR: no small corner labels or Japanese text, the name card shows just the name (tap to
      open it), and there is no pop-up facts button. The Face guard and Armour toggles show the helmet thumbnail
      and go dim when off.
 5. **Toggles.** **Face guard** puts the menpō and its throat guard on or off (it starts on; the orange chin cords tie the helmet on either way).
@@ -86,7 +90,7 @@ holds the token set; the kit is in [`vendor/anatomy/`](vendor/anatomy); the skil
 
 - Print `target.png` about **18 cm wide** (3:2, about 18 × 12 cm) on **matte** paper.
 - Hold the phone 20–40 cm away, in even light. The card also works on a laptop or tablet screen.
-- The compiled target scores **3,407 detection points over 11 scales, with 46 tracking points**
+- The compiled target scores **3,380 detection points over 11 scales, with 44 tracking points**
   (Noh_Masks' card: 3,623 / 52).
 
 ## Files

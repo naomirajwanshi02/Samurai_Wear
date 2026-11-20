@@ -28,7 +28,8 @@ const R = {
 function ensureSuit(id){
   if (R.cache.has(id)) return R.cache.get(id);
   const s = buildSuit(id, { aniso: Math.min(8, R.renderer.capabilities.getMaxAnisotropy()), menpo: R.menpo });
-  if (R.mode === 'camera') bindToFace(s.userData.face); // tie the face guard to the landmarks
+  // tie the face guard and the chin cords to the face landmarks, like a lens
+  if (R.mode === 'camera'){ bindToFace(s.userData.face); bindToFace(s.userData.cords); }
   R.cache.set(id, s);
   return s;
 }
@@ -82,10 +83,40 @@ function frame(now){
 
 const _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(), _n = new THREE.Vector3(), _id = new THREE.Quaternion();
 const _m = new THREE.Matrix4(), _one = new THREE.Vector3(1, 1, 1);
+
+// Fitting the helmet to each face, the way head-wear lenses adapt: measure the live face
+// (cheek-to-cheek width, brow-to-chin height, and where the eyebrows sit) against MindAR's
+// canonical face, scale the helmet to it and drop its brim onto the brow line. The fit is
+// smoothed slowly, since a face's shape does not change from frame to frame.
+const CANON = { w: 15.328, h: 17.665, brow: 5.109 };
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+export function measureFace(l){
+  return {
+    w: Math.hypot(l[454][0] - l[234][0], l[454][2] - l[234][2]),
+    h: l[10][1] - l[152][1],
+    brow: (l[105][1] + l[334][1] + l[66][1] + l[296][1]) / 4,
+  };
+}
+function fitHead(head, lms, update = true){
+  if (update || !R.fit){
+    const m = measureFace(lms);
+    const sx = clamp(m.w / CANON.w, 0.86, 1.2), sy = clamp(m.h / CANON.h, 0.86, 1.2);
+    const browCanon = (FACE.positions[105][1] + FACE.positions[334][1] + FACE.positions[66][1] + FACE.positions[296][1]) / 4;
+    const dy = clamp(m.brow - browCanon * sy, -1.5, 1.5);
+    if (!R.fit) R.fit = { sx, sy, dy };
+    else { const a = 0.06; R.fit.sx += (sx - R.fit.sx) * a; R.fit.sy += (sy - R.fit.sy) * a; R.fit.dy += (dy - R.fit.dy) * a; }
+  }
+  const f = R.fit;
+  // the helmet, lining and neck guard scale with the face; depth follows the width
+  head.scale.set(f.sx, f.sy, f.sx);
+  head.position.y = f.dy;
+  // the hidden head stand-ins match, so the back of the helmet still hides behind you
+  if (R.occ){ R.occ.scale.copy(head.scale); R.occ.position.y = f.dy; }
+}
 function readFace(dt){
   const est = R.mindar.getLatestEstimate();
   const has = !!est;
-  if (has !== R.hasFace){ R.hasFace = has; R.onFace?.(has); if (!has){ R.pose.reset(); R.marks.reset(); } }
+  if (has !== R.hasFace){ R.hasFace = has; R.onFace?.(has); if (!has){ R.pose.reset(); R.marks.reset(); R.fit = null; } }
   R.face.visible = has; R.torso.visible = has;
   if (!has) return;
   // stabilise each new pose from the tracker (see stabilise.js); between updates hold it
@@ -98,8 +129,8 @@ function readFace(dt){
     R.face.matrix.compose(R.pose.p, R.pose.q, _one); R.face.matrixWorldNeedsUpdate = true;
     // keep the live face-mesh occluder on the same steadied pose as the helmet
     if (R.faceOcc){ R.faceOcc.matrix.copy(R.face.matrix); R.faceOcc.matrixWorldNeedsUpdate = true; }
-    if (R.current) followFace(R.current.userData.face, R.lms);
-    if (R.swap?.old) followFace(R.swap.old.userData.face, R.lms);
+    if (R.current){ followFace(R.current.userData.face, R.lms); followFace(R.current.userData.cords, R.lms); fitHead(R.current.userData.head, R.lms); }
+    if (R.swap?.old){ followFace(R.swap.old.userData.face, R.lms); followFace(R.swap.old.userData.cords, R.lms); fitHead(R.swap.old.userData.head, R.lms, false); }
   } else if (R.faceOcc){ R.faceOcc.matrix.copy(R.face.matrix); R.faceOcc.matrixWorldNeedsUpdate = true; }
   // the body hangs from the neck and turns only a quarter as far as the head
   R.face.matrix.decompose(_p, _q, _s);
@@ -220,7 +251,7 @@ export async function startCamera(container, { onStatus, onFace }){
   // the helmet rides the whole-face pose (the matrix MindAR's own face mesh uses)
   const face = new THREE.Group();
   face.matrixAutoUpdate = false; face.visible = false;
-  face.add(occluders());
+  R.occ = occluders(); face.add(R.occ);
   const torso = new THREE.Group(); torso.visible = false;
   // Like a head-wear lens: the live face mesh (468 landmarks, reshaped every frame) is drawn
   // into depth only, so any part of the helmet that is behind your real face — the far flap,
@@ -288,7 +319,7 @@ export function stop(){
   R.cache.clear();
   if (R.mode === 'preview') R.renderer?.dispose();
   if (R.container){ R.container.innerHTML = ''; R.container.classList.remove('preview'); }
-  Object.assign(R, { mode: null, current: null, currentId: null, video: null, hasFace: false, swap: null, light: null, faceOcc: null, lastEst: null, lms: null });
+  Object.assign(R, { mode: null, current: null, currentId: null, video: null, hasFace: false, swap: null, light: null, faceOcc: null, lastEst: null, lms: null, fit: null, occ: null });
 }
 
 // ------------------------------------------------------------------ photo
@@ -319,19 +350,15 @@ export async function snapshot(){
   return new Promise((ok) => c.toBlob(ok, 'image/jpeg', 0.92));
 }
 function caption(g, W, H, k, m){
-  const pad = 14 * k, w = Math.min(W - pad * 2, 300 * k), h = 58 * k, x = pad, y = H - h - pad;
+  // a small plate with just the armour's name
   g.save();
+  g.font = `900 ${20 * k}px 'Zen Maru Gothic',system-ui,sans-serif`;
+  const pad = 14 * k, w = g.measureText(m.name).width + 28 * k, h = 40 * k, x = pad, y = H - h - pad;
   g.shadowColor = 'rgba(28,18,10,.35)'; g.shadowBlur = 10 * k;
   g.fillStyle = '#f6eddb'; roundRect(g, x, y, w, h, 6 * k); g.fill();
   g.shadowBlur = 0; g.strokeStyle = '#8c7457'; g.lineWidth = k; g.stroke();
-  g.fillStyle = '#5b4630'; g.font = `${9.5 * k}px ui-monospace,Consolas,monospace`;
-  g.fillText(`FIG. ${String(m.n).padStart(2, '0')} · SAMURAI WEAR`, x + 10 * k, y + 16 * k);
-  g.textAlign = 'right'; g.fillText(m.era, x + w - 10 * k, y + 16 * k);
-  g.textAlign = 'left'; g.fillStyle = '#2b1e13'; g.font = `900 ${20 * k}px 'Zen Maru Gothic',system-ui,sans-serif`;
-  g.fillText(m.name, x + 10 * k, y + 43 * k);
-  const nw = g.measureText(m.name).width;
-  g.fillStyle = '#b5452f'; g.font = `700 ${16 * k}px 'Zen Maru Gothic','Yu Gothic',sans-serif`;
-  g.fillText(m.jp, x + 18 * k + nw, y + 42 * k);
+  g.fillStyle = '#2b1e13'; g.textBaseline = 'middle';
+  g.fillText(m.name, x + 14 * k, y + h / 2 + 1 * k);
   g.restore();
 }
 function roundRect(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }

@@ -237,7 +237,7 @@ function lining(){
   const A0 = 1.22, cz = -3.7, rx = 8.6, rz = 9.9;
   const f = (u, v) => {
     const t = A0 + u * (TAU - 2 * A0);
-    const yBot = -6.8 - 2.6 * (1 - Math.cos(t)) / 2; // lower at the back, over the nape
+    const yBot = -4.2 - 5.2 * ((1 - Math.cos(t)) / 2) ** 0.7; // up by the ears at the front, down over the nape at the back
     const y = yBot + (rimY(t) + 0.6 - yBot) * v;
     const k = 1 + 0.04 * Math.sin(Math.PI * v);
     return [rx * k * Math.sin(t), y, cz + rz * k * Math.cos(t)];
@@ -505,14 +505,16 @@ export function buildSuit(id = 'gusoku', { aniso = 8, menpo: withFace } = {}){
   const root = new THREE.Group(); root.name = id;
   const head = new THREE.Group(); head.name = 'kabuto';
   const sk = shikoro(aniso);
-  head.add(bowl(mat), lining(), visor(mat), crest(mat), sk.g, flaps(mat, sk.lames), chinCord(mat));
+  head.add(bowl(mat), lining(), visor(mat), crest(mat), sk.g, flaps(mat, sk.lames));
+  // the chin cords are tied to the face (skinned to its landmarks in AR), not to the helmet
+  const cords = new THREE.Group(); cords.name = 'cords'; cords.add(chinCord(mat));
   const face = new THREE.Group(); face.name = 'faceguard';
   face.add(menpo(mat, aniso));
   const lower = yodare(aniso);
   head.add(lower);
-  root.add(head, face);
+  root.add(head, face, cords);
   const body = torso(mat, aniso);
-  root.userData = { head, face, lower, body, buildMs: 0 };
+  root.userData = { head, face, lower, cords, body, buildMs: 0 };
   setMenpo(root, withFace ?? true);
   root.userData.buildMs = Math.round(performance.now() - t0);
   return root;

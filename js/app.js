@@ -131,7 +131,7 @@ function buildTray(){
     b.className = 'chip';
     b.setAttribute('aria-label', m.name);
     b.dataset.id = m.id;
-    b.innerHTML = `<span class="num">${String(i + 1).padStart(2, '0')}</span><img src="assets/thumbs/${m.id}.png" alt="" loading="lazy"><b>${m.short}</b><small>${m.jp}</small>`;
+    b.innerHTML = `<img src="assets/thumbs/${m.id}.png" alt="" loading="lazy"><b>${m.short}</b>`;
     b.addEventListener('click', () => select(m.id));
     tray.appendChild(b);
   });
@@ -139,7 +139,7 @@ function buildTray(){
   for (const [key, label] of [['menpo', 'Face guard'], ['armour', 'Armour']]){
     const b = document.createElement('button');
     b.className = 'chip toggle'; b.id = `tg-${key}`;
-    b.innerHTML = `<img src="assets/thumbs/${S.suit}.png" alt=""><b>${label}</b><small>${key === 'menpo' ? '面頬' : '鎧'}</small>`;
+    b.innerHTML = `<img src="assets/thumbs/${S.suit}.png" alt=""><b>${label}</b>`;
     b.addEventListener('click', () => toggle(key));
     tray.appendChild(b);
   }
@@ -151,7 +151,7 @@ function syncToggles(){
 }
 function toggle(key){
   buzz(12);
-  if (key === 'menpo'){ S.menpo = !menpoOn(); store.set('menpo', S.menpo); Stage.setFaceGuard(S.menpo); toast(S.menpo ? '<b>Menpō 面頬</b> on: the iron face mask with its white horsehair moustache.' : 'Face guard off. The red silk chin cord still ties the helmet on.', 2600); }
+  if (key === 'menpo'){ S.menpo = !menpoOn(); store.set('menpo', S.menpo); Stage.setFaceGuard(S.menpo); toast(S.menpo ? '<b>Menpō</b> on: the iron face mask with its white horsehair moustache.' : 'Face guard off. The orange silk cords still tie the helmet on.', 2600); }
   else { S.armour = !S.armour; store.set('armour', S.armour); Stage.setArmour(S.armour); }
   syncToggles();
 }
@@ -162,7 +162,6 @@ async function select(id, { quiet = false } = {}){
   S.suit = id; store.set('suit', id);
   document.querySelectorAll('#tray .chip[data-id]').forEach((c) => c.setAttribute('aria-selected', c.dataset.id === id));
   $('ncName').textContent = m.name;
-  $('ncJp').textContent = `${m.jp} · ${m.kana}`;
   $('ncBlurb').textContent = m.blurb;
   $('namecard').classList.remove('pop', 'compact'); void $('namecard').offsetWidth; $('namecard').classList.add('pop');
   clearTimeout(S.compactT); S.compactT = setTimeout(() => $('namecard').classList.add('compact'), 5000);
@@ -206,7 +205,6 @@ async function takePhoto(){
   S.photoUrl = URL.createObjectURL(blob);
   const m = BY_ID[S.suit];
   $('photoImg').src = S.photoUrl;
-  $('photoName').textContent = `${m.name} ${m.jp}`;
   $('saveBtn').href = S.photoUrl;
   $('saveBtn').download = `samurai-${m.id}.jpg`;
   const file = new File([blob], `samurai-${m.id}.jpg`, { type: 'image/jpeg' });
