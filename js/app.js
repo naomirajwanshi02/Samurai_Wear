@@ -266,6 +266,7 @@ $('permBtn').addEventListener('click', askCamera);
 $('scanRetry').addEventListener('click', openScan);
 $('scanSkip').addEventListener('click', () => { stopScan(); overlay('guide', false); openIntro(); });
 $('goBtn').addEventListener('click', () => start(false));
+$('guideClose').addEventListener('click', () => { stopScan(); location.href = HUB; });
 $('closeBtn').addEventListener('click', () => { overlay('hud', false); overlay('faceGuide', false); openScan(); });
 $('infoClose').addEventListener('click', hideInfo);
 $('infoBtn').addEventListener('click', () => showInfo());

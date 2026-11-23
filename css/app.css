@@ -210,3 +210,4 @@ body.from-hub #hud .iconcol{display:none}
 #hint{display:none}
 /* ---------- the bottom tray: centred, and only as wide as its options ---------- */
 .hud-bottom .tray{width:auto;max-width:100%;align-self:center;justify-content:center;overflow-x:auto}
+.guideclose{position:fixed;z-index:50;top:calc(var(--safe-t,0px) + 10px);right:calc(var(--safe-r,0px) + 10px);pointer-events:auto}
