@@ -189,3 +189,24 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 .hubback{position:fixed;z-index:50;top:calc(var(--safe-t) + 10px);right:calc(var(--safe-r) + 10px);pointer-events:auto}
 .hubback[hidden]{display:none}
 body.from-hub #hud .iconcol{display:none}
+/* ---------- information panel (swipeable pages) with the cross and i button outside it ---------- */
+.hud-top{position:relative;justify-content:flex-end;align-items:flex-start}
+.hud-top .namecard{position:relative;flex:1;min-width:0;padding:10px 42px 8px 14px;pointer-events:auto;background:var(--glass);cursor:auto}
+.hud-top .namecard[hidden]{display:none}
+.namecard .x{position:absolute;top:8px;right:8px;z-index:2;width:28px;height:28px;border:0;border-radius:50%;background:var(--anatomy-shade-2);color:var(--anatomy-strong);display:grid;place-items:center;padding:0}
+.namecard .x:active{transform:scale(.92)}
+.slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch;touch-action:pan-x}
+.slides::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always}
+.slide .nc-title{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:900;color:var(--anatomy-strong);line-height:1.15}
+.slide .nc-blurb{margin:4px 0 0;font-size:13.5px;line-height:1.35}
+.state{font:800 11px/1 var(--ui);letter-spacing:.04em;text-transform:uppercase;padding:4px 7px;border-radius:999px}
+.state.on{background:var(--anatomy-green);color:#fff8ec}
+.state.off{background:var(--anatomy-shade-1);color:var(--anatomy-strong)}
+.dots{display:flex;justify-content:center;gap:6px;margin-top:8px}
+.dot{width:8px;height:8px;padding:0;border:0;border-radius:50%;background:var(--anatomy-faint)}
+.dot[aria-selected="true"]{background:var(--anatomy-red);width:18px;border-radius:999px}
+.iconcol{flex:none;gap:8px}
+#hint{display:none}
+/* ---------- the bottom tray: centred, and only as wide as its options ---------- */
+.hud-bottom .tray{width:auto;max-width:100%;align-self:center;justify-content:center;overflow-x:auto}

@@ -27,7 +27,9 @@ const q = new URLSearchParams(location.search);
 const ids = ['gusoku'];
 const yaw = parseFloat(q.get('yaw') ?? '0.42'), pitch = parseFloat(q.get('pitch') ?? '0.06');
 const save = q.has('save');
-const withBody = !save && q.get('body') !== '0';
+// &part=menpo renders just the face mask, &part=armour just the body armour (thumbnails for the toggles)
+const part = q.get('part');
+const withBody = part === 'armour' || (!part && !save && q.get('body') !== '0');
 const cell = save ? 512 : ids.length === 1 ? 900 : 560;
 const cols = save ? 1 : ids.length, rows = 1;
 const log = (t) => { document.getElementById('log').textContent += t + '\n'; };
@@ -43,12 +45,14 @@ const cam = new THREE.PerspectiveCamera(30, 1, 1, 600);
 const dist = parseFloat(q.get('dist') ?? (save ? '92' : withBody ? '125' : '82'));
 cam.position.set(0, withBody ? -6 : 3, dist);
 cam.lookAt(0, withBody ? -8 : save ? 4.5 : 3, 0);
+if (part === 'menpo'){ cam.position.set(0, -2, 44); cam.lookAt(0, -3.4, 3); }
+if (part === 'armour'){ cam.position.set(0, -32, 178); cam.lookAt(0, -38, 0); }
 
 async function save1(id){
   const c = document.createElement('canvas'); c.width = c.height = cell;
   c.getContext('2d').drawImage(renderer.domElement, 0, 0, cell, cell, 0, 0, cell, cell);
   const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
-  const res = await fetch(`/__save?name=${encodeURIComponent(`assets/thumbs/${id}.png`)}`, { method: 'POST', body: blob });
+  const res = await fetch(`/__save?name=${encodeURIComponent(`assets/thumbs/${id}${part ? '-' + part : ''}.png`)}`, { method: 'POST', body: blob });
   log(`${id}.png ${res.ok ? 'saved' : 'FAILED ' + res.status}`);
 }
 
@@ -58,10 +62,12 @@ for (let i = 0; i < ids.length; i++){
   const id = ids[i];
   const s = buildSuit(id, { aniso: renderer.capabilities.getMaxAnisotropy() });
   setMenpo(s, q.has('menpo') ? q.get('menpo') !== '0' : BY_ID[id].menpo);
-  if (q.get('head') !== '0' && !save) holderHead = headForm();
+  if (q.get('head') !== '0' && !save && !part) holderHead = headForm();
+  if (part === 'menpo'){ s.userData.head.visible = false; s.userData.cords.visible = false; setMenpo(s, true); }
+  if (part === 'armour') s.visible = false;
   log(`${id}: built in ${s.userData.buildMs} ms`);
   const holder = new THREE.Group();
-  holder.add(s); if (holderHead) holder.add(holderHead); else holder.add(occluders());
+  holder.add(s); if (holderHead) holder.add(holderHead); else if (!part) holder.add(occluders());
   if (withBody){ s.userData.body.position.copy(NECK); holder.add(s.userData.body); }
   holder.rotation.set(pitch, yaw, 0);
   scene.add(holder);

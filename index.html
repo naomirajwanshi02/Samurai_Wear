@@ -81,7 +81,6 @@
       <p class="small">To dress you up we need your <b>selfie camera</b>. The video stays on this phone: nothing is recorded or sent anywhere.</p>
       <button class="btn red" id="goBtn">Allow camera &amp; start</button>
       <div class="status dark" id="camStatus"></div>
-      <button class="link" id="previewBtn">No camera? Look at the armour instead</button>
 
     </div>
   </div>
@@ -90,16 +89,16 @@
 <!-- ============ 3 · THE ARMOUR ROOM ============ -->
 <div id="hud" class="overlay">
   <div class="hud-top">
-    <div class="hud-left">
-    <div class="plate namecard" id="namecard">
-
-      <div class="nc-main"><b id="ncName"></b></div>
-      <div class="nc-blurb" id="ncBlurb"></div>
+    <!-- the information panel: swipe between the slides; its small cross hides it -->
+    <div class="plate namecard" id="namecard" aria-roledescription="carousel">
+      <button class="x" id="infoClose" aria-label="Close the information"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg></button>
+      <div class="slides" id="slides"></div>
+      <div class="dots" id="dots" role="tablist" aria-label="Information pages"></div>
     </div>
-    <div class="hint" id="hint" role="status" aria-live="polite"></div>
-    </div>
+    <!-- outside the panel: the cross goes back to scanning, the i button shows the panel again -->
     <div class="iconcol">
-      <button class="iconbtn" id="closeBtn" aria-label="Back to the card"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+      <button class="iconbtn" id="closeBtn" aria-label="Back to scanning"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
+      <button class="iconbtn" id="infoBtn" aria-label="Show the information" aria-expanded="true"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="6.2" r="1.9" fill="currentColor"/><path d="M12 10.5v8" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/></svg></button>
     </div>
   </div>
 

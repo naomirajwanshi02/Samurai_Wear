@@ -42,11 +42,13 @@ from about 1650 in the Metropolitan Museum of Art, with its iron face mask (menp
    - **Covers the whole head.** The bowl is sized for a head with hair, its brim sits on the eyebrows, and a dark
      lining wraps the sides and back of the head from the rim to below the jaw, so no hair or ears show between
      the mask and the neck guard (in the drawing, the space round the face inside the helmet is dark).
-   - The screen stays clear for the AR: no small corner labels or Japanese text, the name card shows just the name (tap to
-     open it), and there is no pop-up facts button. The Face guard and Armour toggles show the helmet thumbnail
-     and go dim when off.
-5. **Toggles.** **Face guard** puts the menpō and its throat guard on or off (it starts on; the orange chin cords tie the helmet on either way).
-   **Armour** shows or hides the cuirass, shoulder guards and skirt.
+   - **Information panel.** All the words are in one panel at the top, with a page each for the armour, the face
+     guard, the armour and how to wear it. Swipe sideways (or tap the dots) to move between pages. Its small cross
+     hides it; tapping Face guard or Armour brings it back on that page (showing On or Off), and so does the **i**
+     button under the big cross. The big cross goes back to scanning. There are no pop-up cues over the AR.
+5. **Options.** The tray at the bottom is centred and only as wide as its buttons. **Face guard** (shown by the
+   mask on its own) puts the menpō and its throat guard on or off; it starts on, and the orange chin cords tie the helmet
+   on either way. **Armour** (shown by the armour on its own) shows or hides the cuirass, shoulder guards and skirt.
 6. **Photo.** The round button saves the mirrored selfie with the armour and a small caption plate.
 
 ## The gusoku 具足, about 1650
