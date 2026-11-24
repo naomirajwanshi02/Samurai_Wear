@@ -221,3 +221,10 @@ body.from-hub #hud .iconcol{display:none}
 .guideclose{position:absolute;top:50%;right:6px;transform:translateY(-50%);z-index:2;pointer-events:auto;width:44px;height:44px;border:0;border-radius:0;background:none;box-shadow:none;color:var(--strong,var(--anatomy-strong));display:grid;place-items:center;cursor:pointer;padding:0}
 .guideclose:active{transform:translateY(-50%) scale(.92)}
 .scan-top{padding-left:48px!important;padding-right:48px!important}
+/* welcome card: the picture has no shadow, and its cross (top right, inside the card) is a plain cross */
+.hero-figure{filter:none}
+.introx{background:none;box-shadow:none;border-radius:0;width:36px;height:36px}
+.introx svg{width:20px;height:20px}
+/* AR screen, as in Ramen_Anatomy: the exit cross is a plain cross outside the panel, the round i button below it */
+.xbtn{width:46px;height:46px;border:0;padding:0;background:none;box-shadow:none;color:#fff8ec;display:grid;place-items:center;pointer-events:auto;filter:drop-shadow(0 1px 3px #000a)}
+.xbtn:active{transform:scale(.9)}

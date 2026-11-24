@@ -257,11 +257,6 @@ async function takePhoto(){
 
 // ------------------------------------------------------------ wiring
 const HUB = 'https://naomirajwanshi02.github.io/Scan_To_Wear/';
-if (q.get('from') === 'hub'){
-  document.body.classList.add('from-hub');
-  $('hubBack').hidden = false;
-  $('hubBack').addEventListener('click', () => { try { Stage.stop?.(); } catch {} location.href = HUB; });
-}
 $('permBtn').addEventListener('click', askCamera);
 $('scanRetry').addEventListener('click', openScan);
 $('scanSkip').addEventListener('click', () => { stopScan(); overlay('guide', false); openIntro(); });
