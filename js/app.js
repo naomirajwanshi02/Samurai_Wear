@@ -269,7 +269,10 @@ $('goBtn').addEventListener('click', () => start(false));
 $('guideClose').addEventListener('click', () => { stopScan(); location.href = HUB; });
 $('closeBtn').addEventListener('click', () => { overlay('hud', false); overlay('faceGuide', false); openScan(); });
 $('infoClose').addEventListener('click', hideInfo);
-$('infoBtn').addEventListener('click', () => showInfo());
+// the i button opens the panel when it is closed and closes it when it is open
+$('infoBtn').addEventListener('click', () => ($('namecard').hidden ? showInfo() : hideInfo()));
+// the welcome card's cross: back to scanning the card
+$('introExit').addEventListener('click', () => { show(null); openScan(); });
 $('shutter').addEventListener('click', takePhoto);
 $('photoBack').addEventListener('click', () => show(null));
 $('errBtn').addEventListener('click', () => { $('err').hidden = true; location.reload(); });

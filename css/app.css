@@ -211,3 +211,11 @@ body.from-hub #hud .iconcol{display:none}
 /* ---------- the bottom tray: centred, and only as wide as its options ---------- */
 .hud-bottom .tray{width:auto;max-width:100%;align-self:center;justify-content:center;overflow-x:auto}
 .guideclose{position:fixed;z-index:50;top:calc(var(--safe-t,0px) + 10px);right:calc(var(--safe-r,0px) + 10px);pointer-events:auto}
+/* the welcome card's cross: in a circle, inside the card, top right */
+.welcome{position:relative}
+.introx{position:absolute;top:10px;right:10px;z-index:2;width:36px;height:36px;border:0;border-radius:50%;padding:0;display:grid;place-items:center;
+  background:var(--anatomy-shade-2);color:var(--anatomy-strong);box-shadow:inset 0 0 0 1px var(--anatomy-faint)}
+.introx:active{transform:scale(.92)}
+/* the info panel's own cross: a plain cross, no circle */
+.namecard .x{background:none;box-shadow:none;width:30px;height:30px;top:6px;right:6px;color:var(--anatomy-strong)}
+.namecard .x svg{width:16px;height:16px}
