@@ -228,3 +228,10 @@ body.from-hub #hud .iconcol{display:none}
 /* AR screen, as in Ramen_Anatomy: the exit cross is a plain cross outside the panel, the round i button below it */
 .xbtn{width:46px;height:46px;border:0;padding:0;background:none;box-shadow:none;color:#fff8ec;display:grid;place-items:center;pointer-events:auto;filter:drop-shadow(0 1px 3px #000a)}
 .xbtn:active{transform:scale(.9)}
+/* top and bottom panels centred on the screen and on each other: the info panel sits in the middle,
+   with equal room either side, and the exit cross and i button stand at the right edge outside it */
+.hud-top{position:relative;width:100%;max-width:none;justify-content:center}
+.hud-top .namecard{flex:0 1 auto;width:calc(100% - 128px);max-width:560px;margin:0 auto}
+.hud-top .iconcol{position:absolute;top:0;right:0}
+.hud-bottom{width:100%;max-width:none;align-items:center}
+.hud-bottom .tray{margin:0 auto}
