@@ -12,7 +12,7 @@ from about 1650 in the Metropolitan Museum of Art, with its iron face mask (menp
 
 1. **Camera permission.** A plain first screen asks for the camera. It is skipped if already allowed.
 2. **Scan.** MindAR *image* tracking watches the back camera until it sees the card, then shuts down.
-3. **Welcome.** A short card explains samurai armour. **Start** starts the selfie camera; the plain cross at its top right goes back to scanning.
+3. **Welcome.** A short card explains samurai armour. **Start** starts the selfie camera; the plain cross at its top right goes back to the Scan to Wear scanning screen.
 4. **Wear.** MindAR *face* tracking (MediaPipe Face Landmarker, 468 landmarks) follows your face, and the
    helmet is worn the way a head-wear lens is:
    - **Pinned to the head.** The helmet rides the whole-face pose (MindAR's `faceMatrix`), so it sits on
@@ -45,9 +45,10 @@ from about 1650 in the Metropolitan Museum of Art, with its iron face mask (menp
    - **Information panel.** All the words are in one panel at the top, with a page each for the armour, the face
      guard, the armour and how to wear it. Swipe sideways (or tap the dots) to move between pages. Its small cross
      hides it (a plain cross, no circle); tapping Face guard or Armour brings it back on that page (showing On or Off). The **i**
-     button opens the panel when it is closed and closes it when it is open. As in Ramen_Anatomy, the exit cross is a plain
+     button opens the panel when it is closed and closes it when it is open. As in Noh_Masks and Pagoda, the panel fills the top bar from the left edge, and the round exit cross is
      cross outside
-     the panel, with the round i button below it; it goes back to scanning. There are no pop-up cues over the AR.
+     the panel, with the round i button below it. Every cross (scanning screen, welcome card, AR) goes back to the
+     Scan to Wear scanning screen, where this interaction is linked from. There are no pop-up cues over the AR.
 5. **Options.** The tray at the bottom is centred and only as wide as its buttons. **Face guard** (shown by the
    mask on its own) puts the menpō and its throat guard on or off; it starts on, and the orange chin cords tie the helmet
    on either way. **Armour** (shown by the armour on its own) shows or hides the cuirass, shoulder guards and skirt.

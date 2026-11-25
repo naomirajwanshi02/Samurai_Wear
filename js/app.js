@@ -262,12 +262,13 @@ $('scanRetry').addEventListener('click', openScan);
 $('scanSkip').addEventListener('click', () => { stopScan(); overlay('guide', false); openIntro(); });
 $('goBtn').addEventListener('click', () => start(false));
 $('guideClose').addEventListener('click', () => { stopScan(); location.href = HUB; });
-$('closeBtn').addEventListener('click', () => { overlay('hud', false); overlay('faceGuide', false); openScan(); });
+// as in Noh_Masks, every cross leaves for the Scan to Wear scanning screen, where this interaction is linked from
+$('closeBtn').addEventListener('click', () => { try { Stage.stop(); } catch { /* fine */ } location.href = HUB; });
 $('infoClose').addEventListener('click', hideInfo);
 // the i button opens the panel when it is closed and closes it when it is open
 $('infoBtn').addEventListener('click', () => ($('namecard').hidden ? showInfo() : hideInfo()));
-// the welcome card's cross: back to scanning the card
-$('introExit').addEventListener('click', () => { show(null); openScan(); });
+// the welcome card's cross
+$('introExit').addEventListener('click', () => { stopScan(); location.href = HUB; });
 $('shutter').addEventListener('click', takePhoto);
 $('photoBack').addEventListener('click', () => show(null));
 $('errBtn').addEventListener('click', () => { $('err').hidden = true; location.reload(); });

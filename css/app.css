@@ -235,3 +235,12 @@ body.from-hub #hud .iconcol{display:none}
 .hud-top .iconcol{position:absolute;top:0;right:0}
 .hud-bottom{width:100%;max-width:none;align-items:center}
 .hud-bottom .tray{margin:0 auto}
+/* the info panel as in Noh_Masks and Pagoda: it fills the top bar from the left edge up to the cross
+   and i button; a bold title with the description under it, and a plain small cross in its corner */
+.hud-top{position:relative;display:flex;gap:8px;align-items:flex-start;justify-content:flex-start;width:100%;max-width:620px;margin:0 auto}
+.hud-top .namecard{flex:1;width:auto;max-width:none;min-width:0;margin:0;padding:10px 42px 6px 14px}
+.hud-top .iconcol{position:static;flex:none;display:flex;flex-direction:column;gap:6px}
+.slide .nc-title{font-size:20px;line-height:1.15}
+.slide .nc-blurb{margin:4px 0 0;font-size:13.5px;line-height:1.35}
+.dots{margin-top:6px}
+.hud-bottom{max-width:620px;margin-left:auto;margin-right:auto}
