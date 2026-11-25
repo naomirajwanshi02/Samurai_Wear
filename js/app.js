@@ -5,9 +5,9 @@
 // ?preview=1  no camera at all: the armour stands on a head-form
 // ?suit=gusoku  the suit (there is one: the Met's gusoku, c. 1650)
 
-import { SUITS, BY_ID } from './data.js';
-import { scan, stopScan } from './scan.js';
-import * as Stage from './stage.js';
+import { SUITS, BY_ID } from './data.js?v=20261125b';
+import { scan, stopScan } from './scan.js?v=20261125b';
+import * as Stage from './stage.js?v=20261125b';
 
 const $ = (id) => document.getElementById(id);
 const q = new URLSearchParams(location.search);

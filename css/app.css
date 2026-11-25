@@ -244,3 +244,5 @@ body.from-hub #hud .iconcol{display:none}
 .slide .nc-blurb{margin:4px 0 0;font-size:13.5px;line-height:1.35}
 .dots{margin-top:6px}
 .hud-bottom{max-width:620px;margin-left:auto;margin-right:auto}
+/* the exit cross on the AR screen: no shadow */
+#closeBtn{box-shadow:none;filter:none}

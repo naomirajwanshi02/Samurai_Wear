@@ -8,12 +8,12 @@
 // the head, the way a body does.
 
 import * as THREE from 'three';
-import { buildSuit, disposeSuit, setMenpo, occluders } from './armour.js';
+import { buildSuit, disposeSuit, setMenpo, occluders } from './armour.js?v=20261125b';
 import { setupLook, roomLight } from './look.js';
-import { BY_ID } from './data.js';
+import { BY_ID } from './data.js?v=20261125b';
 import { bindToFace, followFace } from './face-fit.js';
 import * as FACE from './face-model.js';
-import { PoseFilter, LandmarkFilter } from './stabilise.js';
+import { PoseFilter, LandmarkFilter } from './stabilise.js?v=20261125b';
 
 export const NECK = new THREE.Vector3(0, -8, -3.5); // where the body hangs from, in face space
 
